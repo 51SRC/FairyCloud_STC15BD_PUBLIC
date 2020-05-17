@@ -37,8 +37,8 @@ U8 SRCDeviceID = 0x03;
 U8 SRCAID = 0x01;
 U8 CURRENT_LENGTH=0;
 U8 go=0;
-	static	 unsigned int   Timer4_Count=1;
-    unsigned char RES_DATA[]= { 0x7E, 0x00,0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7E};
+static	 unsigned int   Timer4_Count=1;
+unsigned char RES_DATA[]= { 0x7E, 0x00,0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7E};
 
 
 
@@ -69,9 +69,7 @@ void Timer4Init();
 
 
 void main(){
-
-
- P0M0 = 0x00;
+		P0M0 = 0x00;
     P0M1 = 0x00;
     P1M0 = 0x00;
     P1M1 = 0x00;
@@ -200,9 +198,9 @@ void  SendData(char *s)
     {
 				 
         SBUF=s[i];
-     while(!TI);		//检查发送中断标志位
-    TI = 0;	
-    }
+				 while(!TI);		//检查发送中断标志位
+				TI = 0;	
+				}
 }
 
 void UART_T (unsigned char UART_data) { //定义串口发送数据变量
@@ -228,39 +226,22 @@ void UART_R()
 		if((CURRENT_LENGTH==0)&&(SBUF==0x7E))// 判断第一个是不是0x7e  不确定是不是尾部7e
 	   {go=1;}
 
-	if((go==1)&&(CURRENT_LENGTH==1)&&(SBUF==0X7E))//第二个7e
-	   {CURRENT_LENGTH=0;} 
+			if((go==1)&&(CURRENT_LENGTH==1)&&(SBUF==0X7E))//第二个7e
+				 {CURRENT_LENGTH=0;} 
 
-	if(go==1)  //10个字符可以运行了
-	{
-		 DATA_GET[CURRENT_LENGTH]=SBUF;
-    CURRENT_LENGTH++;
-		
-		
-		if(CURRENT_LENGTH==DATA_LENGTH)
-    {
-        CURRENT_LENGTH=0;
-				go = 0;
-        ResponseData(DATA_GET);
-    }
-	}
-
-   
-	
-//		if(CURRENT_LENGTH==DATA_LENGTH )
-//    {
-//				if(DATA_GET[0] == 0x7E && DATA_GET[DATA_LENGTH-1] == 0x7E ){
-//						CURRENT_LENGTH=0;
-//						ResponseData(DATA_GET);
-//				}else {
-//				
-//				}
-//       
-//    }else if(	CURRENT_LENGTH==2 && DATA_GET[0]==0x7E && DATA_GET[1]==0x7E){
-//			CURRENT_LENGTH = 1;
-//		}
-
-		
+			if(go==1)  //9个字符可以运行了
+			{
+				 DATA_GET[CURRENT_LENGTH]=SBUF;
+				CURRENT_LENGTH++;
+				
+				
+				if(CURRENT_LENGTH==DATA_LENGTH)
+				{
+						CURRENT_LENGTH=0;
+						go = 0;
+						ResponseData(DATA_GET);
+				}
+			}
 
 }
 
@@ -337,7 +318,7 @@ void sendAckData(unsigned char *RES_DATA) {
     DATA_SEND[3]= RES_DATA[3];
     DATA_SEND[5]= RES_DATA[5];
     DATA_SEND[6]= RES_DATA[6];
-		    DATA_SEND[7]= CheckData(DATA_SEND);
+		DATA_SEND[7]= CheckData(DATA_SEND);
 
     DATA_SEND[DATA_LENGTH-1]= SRCTail;
 		
@@ -427,21 +408,17 @@ void Timer4Init(void)		//5毫秒@11.0592MHz
 
 //中断服务程序
 void Timer4_interrupt() interrupt 20           //中断入口
-
 {
-
-
-		if(Timer4_Count>=2500){
+		if(Timer4_Count>=2000){
 			Timer4_Count = 1;
 			
-
 			RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
-					RES_DATA[5]= 0x66;//高两位数据
-					RES_DATA[6]= 0x67;//进制转换  低两位数据位
+			RES_DATA[5]= 0x22;//高两位数据
+			RES_DATA[6]= 0x33;//进制转换  低两位数据位
 			
 			sendAckData(RES_DATA);
 		}else{
 			
-		Timer4_Count++;
+			Timer4_Count++;
 		}
 }
