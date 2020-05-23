@@ -15,6 +15,7 @@
 
 
 #include "STC15W4K58S4.h"
+#include "DHT11.h"
 
 #include "intrins.h"
 #include <string.h>  // 字符串处理头文件
@@ -51,12 +52,12 @@ unsigned char RES_DATA[]= { 0x7E, 0x00,0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7E}
 
 void SendString(char *s);
 void SendDatas(char *s);
-
+void DELAY_MS(unsigned int timeout);		//@11.0592MHz   1ms
+void DELAY_1MS() ;
 void SendData(char *s);
 void UART_TC (unsigned char *str);
 void UART_T (unsigned char UART_data); //定义串口发送数据变量
 void UART_R();//接受数据
-void DELAY_MS(unsigned int timeout);		//@11.0592MHz   1ms
 void ConnectServer();//连接服务器
 void USART_Init();
 void Device_Init();
@@ -64,7 +65,6 @@ void ResponseData(unsigned char *RES_DATA);
 unsigned char CheckData(unsigned char *CHECK_DATA);
 void sendAckData(unsigned char *RES_DATA);
 void ConnectSuccess();
-void Heat();
 void Timer4Init();
 
 
@@ -94,41 +94,68 @@ void main(){
 
 		ConnectSuccess();
 		
-		 Timer4Init();
+		Timer4Init();
     while(1) {
+			
+			if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
+			{
+				
+				 DATA_Temphui[2]=1;	 
+			}
+		
 
     };
 }
 
+void DELAY_1MS() {
+    unsigned char i, j;
 
+    _nop_();
+    _nop_();
+    _nop_();
+    i = 11;
+    j = 190;
+    do
+    {
+        while (--j);
+    } while (--i);
+
+
+}
+
+void DELAY_MS(unsigned int timeout)		//@11.0592MHz
+{
+    int t = 0;
+    while (t < timeout)
+    {
+        t++;
+        DELAY_1MS();
+    }
+}
+
+
+
+//初始化LED和蜂鸣器
 void Device_Init() {
 
     LED = 0;
     LOUND = 0;
 }
 
+//初始化完成滴滴两声
 void ConnectSuccess(){
 
+	 LED = 1;
 	 LOUND = 1;
 	 DELAY_MS(200);
+		LED = 0;
 		LOUND = 0;
 	 DELAY_MS(200);
+	  LED = 1;
 	  LOUND = 1;
 	 DELAY_MS(200);
-	  LOUND = 0;
-
-}
-
-
-void Heat(){
-
-	 LED = 1;
-	 DELAY_MS(200);
-		LED = 0;
-	 DELAY_MS(200);
-	  LED = 1;
-	 DELAY_MS(200);
 	  LED = 0;
+	  LOUND = 0;
 
 }
 
@@ -190,9 +217,7 @@ void Uart() interrupt 4 using 1
 
 void  SendData(char *s)
 {
-
     unsigned int i=0;
-
 
     for(i=0; i<DATA_LENGTH; i++)
     {
@@ -219,7 +244,7 @@ void UART_TC (unsigned char *str) {
 }
 
 
-//串口  接收到的数据
+//串口  接收ESP8266的串口数据，并校验数据的完整性9位
 
 void UART_R()
 {
@@ -276,18 +301,19 @@ unsigned char CheckData(unsigned char *mes){
     return crc;
 }
 
-
+//处理接收到的数据
 void ResponseData(unsigned char *RES_DATA) {
 
     if((CheckData(RES_DATA) == RES_DATA[DATA_LENGTH-2]) && RES_DATA[1]== SRCDeviceID &&  RES_DATA[2]== SRCAID && RES_DATA[4]== 0x01 ) {
 
         if(RES_DATA[3]==0x00 ) {
-					RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
-					RES_DATA[5]= 0x11;//高两位数据
-					RES_DATA[6]= 0x13;//进制转换  低两位数据位
-
+						if(DATA_Temphui[2]==1){
+									RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
+									RES_DATA[5]= DATA_Temphui[0];//高两位数据
+									RES_DATA[6]= DATA_Temphui[1];//进制转换  低两位数据位
+								//	DATA_Temphui[2]=0;
+						}	
             sendAckData(RES_DATA);
-						Heat();
         } else	if(RES_DATA[3]==0x03 && RES_DATA[6]==0x02) {
             LED = 1;
             sendAckData(RES_DATA);
@@ -305,7 +331,7 @@ void ResponseData(unsigned char *RES_DATA) {
 
 }
 
-
+//处理待发送的数据
 void sendAckData(unsigned char *RES_DATA) {
 
 
@@ -326,35 +352,7 @@ void sendAckData(unsigned char *RES_DATA) {
 
 }
 
-
-
-void DELAY_1MS() {
-    unsigned char i, j;
-
-    _nop_();
-    _nop_();
-    _nop_();
-    i = 11;
-    j = 190;
-    do
-    {
-        while (--j);
-    } while (--i);
-
-
-}
-
-void DELAY_MS(unsigned int timeout)		//@11.0592MHz
-{
-    int t = 0;
-    while (t < timeout)
-    {
-        t++;
-        DELAY_1MS();
-    }
-}
-
-
+//初始化ESP8266WiFi模块，并连接到服务器
 void ConnectServer() {
 
     DELAY_MS( 1000);
@@ -381,7 +379,7 @@ void ConnectServer() {
     UART_TC("AT+CIPMODE=1\r\n\0"); // 设置透传模式
     DELAY_MS( 2000);
 
-  // UART_TC("AT+SAVETRANSLINK=1,\"192.168.0.11\",4001,\"TCP\"\r\n\0"); // 保存TCP连接到flash，实现上电透传
+  // UART_TC("AT+SAVETRANSLINK=1,\"47.104.19.111\",4001,\"TCP\"\r\n\0"); // 保存TCP连接到flash，实现上电透传
   // DELAY_MS(1000);
 
     UART_TC("AT+CIPSEND\r\n\0");	 // 进入透传模式 准备模块与电脑进行互传数据
@@ -392,8 +390,6 @@ void ConnectServer() {
 		
 
 }
-
-
 
 void Timer4Init(void)		//5毫秒@11.0592MHz
 {
@@ -406,15 +402,18 @@ void Timer4Init(void)		//5毫秒@11.0592MHz
 }
 
 
-//中断服务程序
-void Timer4_interrupt() interrupt 20           //中断入口
+//10s自动上报温湿度
+void Timer4_interrupt() interrupt 20    //定时中断入口
 {
 		if(Timer4_Count>=2000){
 			Timer4_Count = 1;
 			
-			RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
-			RES_DATA[5]= 0x22;//高两位数据
-			RES_DATA[6]= 0x33;//进制转换  低两位数据位
+			if(DATA_Temphui[2]==1){
+						RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
+						RES_DATA[5]= DATA_Temphui[0];//高两位数据
+						RES_DATA[6]= DATA_Temphui[1];//进制转换  低两位数据位
+					//	DATA_Temphui[2]=0;
+			}	
 			
 			sendAckData(RES_DATA);
 		}else{
@@ -422,3 +421,23 @@ void Timer4_interrupt() interrupt 20           //中断入口
 			Timer4_Count++;
 		}
 }
+
+
+
+//void Timer0Init(void)		//10毫秒@11.0592MHz
+//{
+//	AUXR &= 0x7F;		//定时器时钟12T模式
+//	TMOD &= 0xF0;		//设置定时器模式
+//	TMOD |= 0x01;		//设置定时器模式
+//	TL0 = 0x00;		//设置定时初值
+//	TH0 = 0xDC;		//设置定时初值
+//	TF0 = 0;		//清除TF0标志
+//	TR0 = 1;		//定时器0开始计时
+//	ET0 = 1;	//允许中断
+//}
+
+///********************* Timer0中断函数************************/
+//void timer0_int (void) interrupt 1
+//{
+//   
+//}

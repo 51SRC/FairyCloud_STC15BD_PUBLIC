@@ -1,0 +1,183 @@
+C51 COMPILER V8.02   DHT11                                                                 05/23/2020 18:07:04 PAGE 1   
+
+
+C51 COMPILER V8.02, COMPILATION OF MODULE DHT11
+OBJECT MODULE PLACED IN ..\hex\DHT11.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\code\DHT11.c PRINT(.\DHT11.lst) TABS(2) OBJECT(..\hex\DHT11.obj)
+
+line level    source
+
+   1          #include "DHT11.h"
+   2          #include "mcuinit.h"
+   3          
+   4          sbit DQ=P4^5;
+   5          
+   6          void DHT11_Rst(void);
+   7          unsigned char DHT11_Check(void);
+   8          unsigned char DHT11_Read_Bit(void);
+   9          unsigned char DHT11_Read_Byte(void);
+  10          unsigned char DHT11_Read_Data(unsigned char *temp,unsigned char *humi);
+  11           unsigned char DATA_Temphui[3]={0x00,0x00,0x00};
+  12          
+  13          void DELAY_CMS(unsigned char ms){
+  14   1          unsigned int i;
+  15   1          do{
+  16   2              i = 11059200UL / 13000;
+  17   2            while(--i)  ;
+  18   2           }while(--ms);
+  19   1      }
+  20          
+  21          
+  22          void Delay1us()   //@11.0592MHz
+  23          {
+  24   1        _nop_();
+  25   1        _nop_();
+  26   1        _nop_();
+  27   1      }
+  28          void Delay30us()    //@11.0592MHz
+  29          {
+  30   1        unsigned char i;
+  31   1        _nop_();
+  32   1        _nop_();
+  33   1        i = 80;
+  34   1        while (--i);
+  35   1      }
+  36          
+  37          void Delay50us()    //@11.0592MHz
+  38          {
+  39   1        unsigned char i, j;
+  40   1      
+  41   1        _nop_();
+  42   1        i = 1;
+  43   1        j = 134;
+  44   1        do
+  45   1        {
+  46   2          while (--j);
+  47   2        } while (--i);
+  48   1      }
+  49          
+  50          /*
+  51          unsigned char DHT11()
+  52          {
+  53            unsigned char humi=0x00,temp=0x00;
+  54          
+  55            if(DHT11_Read_Data(&temp,&humi)==0)
+C51 COMPILER V8.02   DHT11                                                                 05/23/2020 18:07:04 PAGE 2   
+
+  56            {
+  57              return 0;
+  58            }
+  59            else
+  60              return 1;
+  61          }
+  62          */
+  63          
+  64          
+  65          //复位DHT11
+  66          void DHT11_Rst(void)     
+  67          {                 
+  68   1        DQ=0;             //拉低DQ
+  69   1          DELAY_CMS(20);      //拉低至少18ms
+  70   1          DQ=1;               //DQ=1 
+  71   1        Delay30us();      //主机拉高20~40us
+  72   1      }
+  73          
+  74          //等待DHT11的回应
+  75          //返回1:未检测到DHT11的存在
+  76          //返回0:存在
+  77          unsigned char DHT11_Check(void)      
+  78          {   
+  79   1        unsigned char retry=0; 
+  80   1          while(DQ&&retry<100)//DHT11会拉低40~80us
+  81   1        {
+  82   2          retry++;
+  83   2          Delay1us();
+  84   2        };   
+  85   1        if(retry>=100)return 1;
+  86   1        else retry=0;
+  87   1          while (!DQ&&retry<100)//DHT11拉低后会再次拉高40~50us
+  88   1        {
+  89   2          retry++;
+  90   2          Delay1us();
+  91   2        };
+  92   1        if(retry>=100)return 1;     
+  93   1        return 0;
+  94   1      }
+  95          
+  96          //从DHT11读取一个位
+  97          //返回值：1/0
+  98          unsigned char DHT11_Read_Bit(void)       
+  99          {
+ 100   1        unsigned char retry=0;
+ 101   1        while(DQ&&retry<100)//等待变为低电平
+ 102   1        {
+ 103   2          retry++;
+ 104   2          Delay1us();
+ 105   2        }
+ 106   1        retry=0;
+ 107   1        while(!DQ&&retry<100)//等待变高电平
+ 108   1        {
+ 109   2          retry++;
+ 110   2          Delay1us();
+ 111   2        }
+ 112   1        Delay50us();//等待50us
+ 113   1        if(DQ)return 1;
+ 114   1        else return 0;       
+ 115   1      }
+ 116          
+ 117          //从DHT11读取一个字节
+C51 COMPILER V8.02   DHT11                                                                 05/23/2020 18:07:04 PAGE 3   
+
+ 118          //返回值：读到的数据
+ 119          unsigned char DHT11_Read_Byte(void)    
+ 120          {        
+ 121   1          unsigned char i,dat;
+ 122   1          dat=0;
+ 123   1        for(i=0;i<8;i++) 
+ 124   1        {
+ 125   2            dat<<=1; 
+ 126   2            dat|=DHT11_Read_Bit();
+ 127   2          }               
+ 128   1          return dat;
+ 129   1      }
+ 130          
+ 131          //从DHT11读取一次数据
+ 132          //temp:温度值(范围:0~50°)
+ 133          //humi:湿度值(范围:20%~90%)
+ 134          //返回值：0,正常;1,读取失败
+ 135          unsigned char DHT11_Read_Data(unsigned char *temp,unsigned char *humi)    
+ 136          {        
+ 137   1        unsigned char buf[5];
+ 138   1        unsigned char i;
+ 139   1        DHT11_Rst();
+ 140   1        if(DHT11_Check()==0)
+ 141   1        {
+ 142   2          for(i=0;i<5;i++)//读取40位数据
+ 143   2          {
+ 144   3            buf[i]=DHT11_Read_Byte();
+ 145   3          }
+ 146   2          if((buf[0]+buf[1]+buf[2]+buf[3])==buf[4])
+ 147   2          {
+ 148   3            *humi=buf[0]; 
+ 149   3            *temp=buf[2];
+ 150   3          }
+ 151   2        }
+ 152   1        else return 1;
+ 153   1        return 0;     
+ 154   1      }
+ 155          
+ 156          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    261    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3      11
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
