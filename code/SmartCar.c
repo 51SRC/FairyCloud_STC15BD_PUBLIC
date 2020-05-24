@@ -20,8 +20,8 @@
 #include "intrins.h"
 #include <string.h>  // 字符串处理头文件
 
-sbit LED = P3 ^ 2;  // 对应硬件连接
-sbit LOUND = P5 ^ 4;  // 对应硬件连接
+sbit LED = P3 ^ 2;  // LED
+sbit LOUND = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
 
 bit busy;
 
@@ -34,7 +34,7 @@ U8 DATA_LENGTH = 9;
 U8 DATA_GET[]=  { 0x7E, 0, 0, 0, 0, 0, 0, 0, 0x7E};
 U8 SRCHeader = 0x7E;
 U8 SRCTail = 0x7E;
-U8 SRCDeviceID = 0x03;
+U8 SRCCID = 0x03;
 U8 SRCAID = 0x01;
 U8 CURRENT_LENGTH=0;
 U8 go=0;
@@ -304,7 +304,7 @@ unsigned char CheckData(unsigned char *mes){
 //处理接收到的数据
 void ResponseData(unsigned char *RES_DATA) {
 
-    if((CheckData(RES_DATA) == RES_DATA[DATA_LENGTH-2]) && RES_DATA[1]== SRCDeviceID &&  RES_DATA[2]== SRCAID && RES_DATA[4]== 0x01 ) {
+    if((CheckData(RES_DATA) == RES_DATA[DATA_LENGTH-2]) && RES_DATA[1]== SRCCID &&  RES_DATA[2]== SRCAID && RES_DATA[4]== 0x01 ) {
 
         if(RES_DATA[3]==0x00 ) {
 						if(DATA_Temphui[2]==1){
@@ -339,7 +339,7 @@ void sendAckData(unsigned char *RES_DATA) {
 
 
     DATA_SEND[0]= SRCHeader;
-    DATA_SEND[1]= SRCDeviceID;
+    DATA_SEND[1]= SRCCID;
     DATA_SEND[2]= SRCAID;
     DATA_SEND[3]= RES_DATA[3];
     DATA_SEND[5]= RES_DATA[5];
@@ -370,7 +370,7 @@ void ConnectServer() {
     DELAY_MS(1000);
 
     UART_TC("AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0");  // 这一步便是连接wifi，延时的时间要长一些，否则会等不到返回的信息。10s
-    DELAY_MS(10000);
+    DELAY_MS(15000);
 
 
     UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");	// 连接到指定TCP服务器

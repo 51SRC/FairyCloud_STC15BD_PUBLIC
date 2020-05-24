@@ -1,10 +1,10 @@
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 1   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 1   
 
 
 C51 COMPILER V8.02, COMPILATION OF MODULE SMARTCAR
 OBJECT MODULE PLACED IN ..\hex\SmartCar.obj
-COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\code\SmartCar.c PRINT(.\SmartCar.lst) TABS(2) OBJECT(..\hex\SmartCar.obj
-                    -)
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\code\SmartCar.c COMPACT PRINT(.\SmartCar.lst) TABS(2) OBJECT(..\hex\Smar
+                    -tCar.obj)
 
 line level    source
 
@@ -30,8 +30,8 @@ line level    source
   20          #include "intrins.h"
   21          #include <string.h>  // 字符串处理头文件
   22          
-  23          sbit LED = P3 ^ 2;  // 对应硬件连接
-  24          sbit LOUND = P5 ^ 4;  // 对应硬件连接
+  23          sbit LED = P3 ^ 2;  // LED
+  24          sbit LOUND = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
   25          
   26          bit busy;
   27          
@@ -44,7 +44,7 @@ line level    source
   34          U8 DATA_GET[]=  { 0x7E, 0, 0, 0, 0, 0, 0, 0, 0x7E};
   35          U8 SRCHeader = 0x7E;
   36          U8 SRCTail = 0x7E;
-  37          U8 SRCDeviceID = 0x03;
+  37          U8 SRCCID = 0x03;
   38          U8 SRCAID = 0x01;
   39          U8 CURRENT_LENGTH=0;
   40          U8 go=0;
@@ -62,7 +62,7 @@ line level    source
   52          
   53          void SendString(char *s);
   54          void SendDatas(char *s);
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 2   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 2   
 
   55          void DELAY_MS(unsigned int timeout);    //@11.0592MHz   1ms
   56          void DELAY_1MS() ;
@@ -126,7 +126,7 @@ line level    source
  114   1          _nop_();
  115   1          _nop_();
  116   1          i = 11;
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 3   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 3   
 
  117   1          j = 190;
  118   1          do
@@ -190,7 +190,7 @@ line level    source
  176   1      //  ACC = P_SW1;
  177   1      //  ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=1
  178   1      //  ACC |= S1_S1;               //(P1.6/RxD_3, P1.7/TxD_3)
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 4   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 4   
 
  179   1      //  P_SW1 = ACC;
  180   1      
@@ -254,7 +254,7 @@ line level    source
  238          void UART_TC (unsigned char *str) {
  239   1          while(*str != '\0') {
  240   2              UART_T(*str);
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 5   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 5   
 
  241   2              *str++;
 *** WARNING C275 IN LINE 241 OF ..\CODE\SMARTCAR.C: expression with possibly no effect
@@ -318,15 +318,15 @@ line level    source
  299   3              }
  300   2          }
  301   1          return crc;
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 6   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 6   
 
  302   1      }
  303          
  304          //处理接收到的数据
  305          void ResponseData(unsigned char *RES_DATA) {
  306   1      
- 307   1          if((CheckData(RES_DATA) == RES_DATA[DATA_LENGTH-2]) && RES_DATA[1]== SRCDeviceID &&  RES_DATA[2]== SRC
-             -AID && RES_DATA[4]== 0x01 ) {
+ 307   1          if((CheckData(RES_DATA) == RES_DATA[DATA_LENGTH-2]) && RES_DATA[1]== SRCCID &&  RES_DATA[2]== SRCAID &
+             -& RES_DATA[4]== 0x01 ) {
  308   2      
  309   2              if(RES_DATA[3]==0x00 ) {
  310   3                  if(DATA_Temphui[2]==1){
@@ -361,7 +361,7 @@ line level    source
  339   1      
  340   1      
  341   1          DATA_SEND[0]= SRCHeader;
- 342   1          DATA_SEND[1]= SRCDeviceID;
+ 342   1          DATA_SEND[1]= SRCCID;
  343   1          DATA_SEND[2]= SRCAID;
  344   1          DATA_SEND[3]= RES_DATA[3];
  345   1          DATA_SEND[5]= RES_DATA[5];
@@ -382,7 +382,7 @@ line level    source
  360   1          UART_TC("+++\0"); // 退出透传模式
  361   1          DELAY_MS( 1000);
  362   1      
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 7   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 7   
 
  363   1      //    UART_TC("AT+RST\r\n\0");  // 复位
  364   1      //    DELAY_MS(2000);
@@ -446,7 +446,7 @@ line level    source
  420   2            
  421   2            Timer4_Count++;
  422   2          }
-C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 18:07:04 PAGE 8   
+C51 COMPILER V8.02   SMARTCAR                                                              05/23/2020 22:42:38 PAGE 8   
 
  423   1      }
  424          
@@ -472,11 +472,11 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1066    ----
+   CODE SIZE        =   1232    ----
    CONSTANT SIZE    =    157    ----
    XDATA SIZE       =   ----    ----
-   PDATA SIZE       =   ----    ----
-   DATA SIZE        =     27      33
+   PDATA SIZE       =     27      33
+   DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      1    ----
 END OF MODULE INFORMATION.
