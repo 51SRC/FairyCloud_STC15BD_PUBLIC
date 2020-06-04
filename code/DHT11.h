@@ -3,6 +3,6 @@
 
 //extern unsigned char DHT11();
 extern unsigned char DHT11_Read_Data(unsigned char *temp,unsigned char *humi); 
-extern  unsigned char DATA_Temphui[3];   //梁物業
+extern  unsigned char xdata DATA_Temphui[3];   //梁物業
 //extern void DELAY_CMS(unsigned char ms);
 #endif

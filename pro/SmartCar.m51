@@ -1,23 +1,23 @@
-BL51 BANKED LINKER/LOCATER V6.00                                                        05/23/2020  22:42:39  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.00                                                        06/05/2020  00:15:54  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.00, INVOKED BY:
 C:\KEIL\C51\BIN\BL51.EXE ..\hex\SmartCar.obj, ..\hex\DHT11.obj TO ..\hex\SmartCar PRINT (.\SmartCar.m51) RAMSIZE (256)
 
 
-MEMORY MODEL: COMPACT
+MEMORY MODEL: SMALL
 
 
 INPUT MODULES INCLUDED:
   ..\hex\SmartCar.obj (SMARTCAR)
   ..\hex\DHT11.obj (DHT11)
-  C:\KEIL\C51\LIB\C51C.LIB (?C_STARTUP)
-  C:\KEIL\C51\LIB\C51C.LIB (?C?COPY)
-  C:\KEIL\C51\LIB\C51C.LIB (?C?CLDPTR)
-  C:\KEIL\C51\LIB\C51C.LIB (?C?CLDOPTR)
-  C:\KEIL\C51\LIB\C51C.LIB (?C?CSTPTR)
-  C:\KEIL\C51\LIB\C51C.LIB (?C?CSTOPTR)
-  C:\KEIL\C51\LIB\C51C.LIB (?C_INIT)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?COPY)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CSTPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CSTOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
 
 
 LINK MAP OF MODULE:  ..\hex\SmartCar (SMARTCAR)
@@ -32,133 +32,141 @@ LINK MAP OF MODULE:  ..\hex\SmartCar (SMARTCAR)
                     0010H     0010H                  *** GAP ***
             BIT     0020H.0   0000H.1   UNIT         ?BI?SMARTCAR
                     0020H.1   0000H.7                *** GAP ***
-            IDATA   0021H     0001H     UNIT         ?STACK
+            DATA    0021H     003BH     UNIT         ?DT?SMARTCAR
+            DATA    005CH     0023H     UNIT         _DATA_GROUP_
+            IDATA   007FH     0001H     UNIT         ?STACK
 
             * * * * * * *  X D A T A   M E M O R Y  * * * * * * *
-            XDATA   0000H     001BH     INPAGE       ?PD?SMARTCAR
-            XDATA   001BH     0003H     INPAGE       ?PD?DHT11
-            XDATA   001EH     0044H     INPAGE       _PDATA_GROUP_
+            XDATA   0000H     0048H     UNIT         _XDATA_GROUP_
+            XDATA   0048H     0012H     UNIT         ?XD?SMARTCAR
+            XDATA   005AH     0003H     UNIT         ?XD?DHT11
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
-            CODE    0003H     001EH     UNIT         ?PR?USART_INIT?SMARTCAR
-                    0021H     0002H                  *** GAP ***
+            CODE    0003H     0008H     UNIT         ?PR?_UART_T?SMARTCAR
+            CODE    000BH     0003H     ABSOLUTE     
+            CODE    000EH     0014H     UNIT         ?PR?DHT11_READ_BYTE?DHT11
+                    0022H     0001H                  *** GAP ***
             CODE    0023H     0003H     ABSOLUTE     
-            CODE    0026H     0076H     UNIT         ?PR?TIMER4_INTERRUPT?SMARTCAR
-            CODE    009CH     0007H     UNIT         ?PR?DELAY30US?DHT11
+            CODE    0026H     0061H     UNIT         ?PR?CONNECTSERVER?SMARTCAR
+            CODE    0087H     0016H     UNIT         ?PR?_UART_TC?SMARTCAR
+            CODE    009DH     0005H     UNIT         ?PR?DEVICE_INIT?SMARTCAR
+                    00A2H     0001H                  *** GAP ***
             CODE    00A3H     0003H     ABSOLUTE     
-            CODE    00A6H     0170H     UNIT         ?C?LIB_CODE
-            CODE    0216H     0125H     UNIT         ?PR?_RESPONSEDATA?SMARTCAR
-            CODE    033BH     00B9H     UNIT         ?PR?_CHECKDATA?SMARTCAR
-            CODE    03F4H     009DH     UNIT         ?CO?SMARTCAR
-            CODE    0491H     008CH     UNIT         ?C_C51STARTUP
-            CODE    051DH     0075H     UNIT         ?PR?_SENDACKDATA?SMARTCAR
-            CODE    0592H     0073H     UNIT         ?PR?_DHT11_READ_DATA?DHT11
-            CODE    0605H     005FH     UNIT         ?PR?CONNECTSERVER?SMARTCAR
-            CODE    0664H     004FH     UNIT         ?PR?MAIN?SMARTCAR
-            CODE    06B3H     004AH     UNIT         ?PR?UART_R?SMARTCAR
-            CODE    06FDH     0039H     UNIT         ?PR?_SENDDATA?SMARTCAR
-            CODE    0736H     0037H     UNIT         ?PR?DHT11_CHECK?DHT11
-BL51 BANKED LINKER/LOCATER V6.00                                                      05/23/2020  22:42:39  PAGE 2
+            CODE    00A6H     01DBH     UNIT         ?PR?_RESPONSEDATA?SMARTCAR
+            CODE    0281H     0170H     UNIT         ?C?LIB_CODE
+            CODE    03F1H     00D6H     UNIT         ?CO?SMARTCAR
+            CODE    04C7H     00C6H     UNIT         ?PR?TIMER4_INTERRUPT?SMARTCAR
+            CODE    058DH     008CH     UNIT         ?C_C51STARTUP
+            CODE    0619H     0060H     UNIT         ?C_INITSEG
+BL51 BANKED LINKER/LOCATER V6.00                                                      06/05/2020  00:15:54  PAGE 2
 
 
-            CODE    076DH     0035H     UNIT         ?C_INITSEG
-            CODE    07A2H     002FH     UNIT         ?PR?UART?SMARTCAR
-            CODE    07D1H     002EH     UNIT         ?PR?DHT11_READ_BIT?DHT11
-            CODE    07FFH     0026H     UNIT         ?PR?CONNECTSUCCESS?SMARTCAR
-            CODE    0825H     0022H     UNIT         ?PR?_DELAY_MS?SMARTCAR
-            CODE    0847H     0016H     UNIT         ?PR?_UART_TC?SMARTCAR
-            CODE    085DH     0015H     UNIT         ?PR?DHT11_READ_BYTE?DHT11
-            CODE    0872H     0012H     UNIT         ?PR?TIMER4INIT?SMARTCAR
-            CODE    0884H     0010H     UNIT         ?PR?_DELAY_CMS?DHT11
-            CODE    0894H     000CH     UNIT         ?PR?DELAY_1MS?SMARTCAR
-            CODE    08A0H     000CH     UNIT         ?PR?DHT11_RST?DHT11
-            CODE    08ACH     000AH     UNIT         ?PR?DELAY50US?DHT11
-            CODE    08B6H     0008H     UNIT         ?PR?_UART_T?SMARTCAR
-            CODE    08BEH     0005H     UNIT         ?PR?DEVICE_INIT?SMARTCAR
-            CODE    08C3H     0004H     UNIT         ?PR?DELAY1US?DHT11
+            CODE    0679H     005BH     UNIT         ?PR?_DHT11_READ_DATA?DHT11
+            CODE    06D4H     0052H     UNIT         ?PR?TIMER0_INT?SMARTCAR
+            CODE    0726H     004CH     UNIT         ?PR?MAIN?SMARTCAR
+            CODE    0772H     0037H     UNIT         ?PR?DHT11_CHECK?DHT11
+            CODE    07A9H     0030H     UNIT         ?PR?_SENDACKDATA?SMARTCAR
+            CODE    07D9H     002FH     UNIT         ?PR?_CHECKBCC?SMARTCAR
+            CODE    0808H     002FH     UNIT         ?PR?UART?SMARTCAR
+            CODE    0837H     002EH     UNIT         ?PR?DHT11_READ_BIT?DHT11
+            CODE    0865H     0026H     UNIT         ?PR?CONNECTSUCCESS?SMARTCAR
+            CODE    088BH     0022H     UNIT         ?PR?_DELAY_MS?SMARTCAR
+            CODE    08ADH     001EH     UNIT         ?PR?USART_INIT?SMARTCAR
+            CODE    08CBH     0016H     UNIT         ?PR?UART_R?SMARTCAR
+            CODE    08E1H     0016H     UNIT         ?PR?TIMER0INIT?SMARTCAR
+            CODE    08F7H     0012H     UNIT         ?PR?TIMER4INIT?SMARTCAR
+            CODE    0909H     0010H     UNIT         ?PR?_DELAY_CMS?DHT11
+            CODE    0919H     000CH     UNIT         ?PR?DELAY_1MS?SMARTCAR
+            CODE    0925H     000CH     UNIT         ?PR?DHT11_RST?DHT11
+            CODE    0931H     000AH     UNIT         ?PR?DELAY50US?DHT11
+            CODE    093BH     0009H     UNIT         ?PR?_LED_ACTIONS_STATUS?SMARTCAR
+            CODE    0944H     0009H     UNIT         ?PR?_BUZZER_ACTIONS_STATUS?SMARTCAR
+            CODE    094DH     0007H     UNIT         ?PR?DELAY30US?DHT11
+            CODE    0954H     0004H     UNIT         ?PR?DELAY1US?DHT11
 
 
 
 OVERLAY MAP OF MODULE:   ..\hex\SmartCar (SMARTCAR)
 
 
-SEGMENT                                 PDATA_GROUP
-  +--> CALLED SEGMENT                 START    LENGTH
------------------------------------------------------
-?PR?UART?SMARTCAR                     -----    -----
+SEGMENT                                       DATA_GROUP          XDATA_GROUP
+  +--> CALLED SEGMENT                       START    LENGTH     START    LENGTH
+-------------------------------------------------------------------------------
+?PR?UART?SMARTCAR                           -----    -----      -----    -----
   +--> ?PR?UART_R?SMARTCAR
 
-?PR?UART_R?SMARTCAR                   -----    -----
+*** NEW ROOT ***************************************************
+
+?PR?TIMER4_INTERRUPT?SMARTCAR               005CH    0004H      0000H    0024H
+  +--> ?CO?SMARTCAR
+  +--> ?PR?_CHECKBCC?SMARTCAR
+  +--> ?PR?_SENDACKDATA?SMARTCAR
+
+?PR?_CHECKBCC?SMARTCAR                      0070H    0003H      -----    -----
+
+?PR?_SENDACKDATA?SMARTCAR                   0070H    0004H      -----    -----
+
+*** NEW ROOT ***************************************************
+
+?PR?TIMER0_INT?SMARTCAR                     -----    -----      -----    -----
   +--> ?PR?_RESPONSEDATA?SMARTCAR
 
-?PR?_RESPONSEDATA?SMARTCAR            001EH    0003H
-  +--> ?PR?_CHECKDATA?SMARTCAR
+?PR?_RESPONSEDATA?SMARTCAR                  0064H    000CH      0024H    0024H
+  +--> ?PR?_CHECKBCC?SMARTCAR
+  +--> ?CO?SMARTCAR
+  +--> ?PR?_LED_ACTIONS_STATUS?SMARTCAR
+  +--> ?PR?_BUZZER_ACTIONS_STATUS?SMARTCAR
   +--> ?PR?_SENDACKDATA?SMARTCAR
 
-?PR?_CHECKDATA?SMARTCAR               0048H    000FH
-  +--> ?CO?SMARTCAR
+BL51 BANKED LINKER/LOCATER V6.00                                                      06/05/2020  00:15:54  PAGE 3
 
-?PR?_SENDACKDATA?SMARTCAR             003CH    000CH
-  +--> ?CO?SMARTCAR
-  +--> ?PR?_CHECKDATA?SMARTCAR
-  +--> ?PR?_SENDDATA?SMARTCAR
-
-?PR?_SENDDATA?SMARTCAR                0048H    0003H
 
 *** NEW ROOT ***************************************************
 
-?PR?TIMER4_INTERRUPT?SMARTCAR         -----    -----
-  +--> ?PR?_SENDACKDATA?SMARTCAR
-
-*** NEW ROOT ***************************************************
-
-?C_C51STARTUP                         -----    -----
+?C_C51STARTUP                               -----    -----      -----    -----
   +--> ?PR?MAIN?SMARTCAR
   +--> ?C_INITSEG
 
-?PR?MAIN?SMARTCAR                     -----    -----
+?PR?MAIN?SMARTCAR                           -----    -----      -----    -----
   +--> ?PR?DEVICE_INIT?SMARTCAR
-BL51 BANKED LINKER/LOCATER V6.00                                                      05/23/2020  22:42:39  PAGE 3
-
-
   +--> ?PR?USART_INIT?SMARTCAR
   +--> ?PR?CONNECTSERVER?SMARTCAR
   +--> ?PR?CONNECTSUCCESS?SMARTCAR
   +--> ?PR?TIMER4INIT?SMARTCAR
   +--> ?PR?_DHT11_READ_DATA?DHT11
 
-?PR?CONNECTSERVER?SMARTCAR            -----    -----
+?PR?CONNECTSERVER?SMARTCAR                  -----    -----      -----    -----
   +--> ?PR?_DELAY_MS?SMARTCAR
   +--> ?CO?SMARTCAR
   +--> ?PR?_UART_TC?SMARTCAR
 
-?PR?_DELAY_MS?SMARTCAR                -----    -----
+?PR?_DELAY_MS?SMARTCAR                      -----    -----      -----    -----
   +--> ?PR?_UART_TC?SMARTCAR
   +--> ?PR?DELAY_1MS?SMARTCAR
 
-?PR?_UART_TC?SMARTCAR                 -----    -----
+?PR?_UART_TC?SMARTCAR                       -----    -----      -----    -----
   +--> ?PR?_UART_T?SMARTCAR
 
-?PR?CONNECTSUCCESS?SMARTCAR           -----    -----
+?PR?CONNECTSUCCESS?SMARTCAR                 -----    -----      -----    -----
   +--> ?PR?_DELAY_MS?SMARTCAR
 
-?PR?_DHT11_READ_DATA?DHT11            0057H    000BH
+?PR?_DHT11_READ_DATA?DHT11                  0074H    000BH      -----    -----
   +--> ?PR?DHT11_RST?DHT11
   +--> ?PR?DHT11_CHECK?DHT11
   +--> ?PR?DHT11_READ_BYTE?DHT11
 
-?PR?DHT11_RST?DHT11                   -----    -----
+?PR?DHT11_RST?DHT11                         -----    -----      -----    -----
   +--> ?PR?_DELAY_CMS?DHT11
   +--> ?PR?DELAY30US?DHT11
 
-?PR?DHT11_CHECK?DHT11                 -----    -----
+?PR?DHT11_CHECK?DHT11                       -----    -----      -----    -----
   +--> ?PR?DELAY1US?DHT11
 
-?PR?DHT11_READ_BYTE?DHT11             -----    -----
+?PR?DHT11_READ_BYTE?DHT11                   -----    -----      -----    -----
   +--> ?PR?DHT11_READ_BIT?DHT11
 
-?PR?DHT11_READ_BIT?DHT11              -----    -----
+?PR?DHT11_READ_BIT?DHT11                    -----    -----      -----    -----
   +--> ?PR?DELAY1US?DHT11
   +--> ?PR?DELAY50US?DHT11
 
@@ -170,42 +178,40 @@ SYMBOL TABLE OF MODULE:  ..\hex\SmartCar (SMARTCAR)
   ----------------------------------
 
   -------         MODULE        ?C?COPY
-  C:0176H         PUBLIC        ?C?COPY
+  C:0351H         PUBLIC        ?C?COPY
+BL51 BANKED LINKER/LOCATER V6.00                                                      06/05/2020  00:15:54  PAGE 4
+
+
   -------         ENDMOD        ?C?COPY
 
   -------         MODULE        ?C?CLDPTR
-  C:019CH         PUBLIC        ?C?CLDPTR
+  C:0377H         PUBLIC        ?C?CLDPTR
   -------         ENDMOD        ?C?CLDPTR
 
   -------         MODULE        ?C?CLDOPTR
-  C:01B5H         PUBLIC        ?C?CLDOPTR
-BL51 BANKED LINKER/LOCATER V6.00                                                      05/23/2020  22:42:39  PAGE 4
-
-
+  C:0390H         PUBLIC        ?C?CLDOPTR
   -------         ENDMOD        ?C?CLDOPTR
 
   -------         MODULE        ?C?CSTPTR
-  C:01E2H         PUBLIC        ?C?CSTPTR
+  C:03BDH         PUBLIC        ?C?CSTPTR
   -------         ENDMOD        ?C?CSTPTR
 
   -------         MODULE        ?C?CSTOPTR
-  C:01F4H         PUBLIC        ?C?CSTOPTR
+  C:03CFH         PUBLIC        ?C?CSTOPTR
   -------         ENDMOD        ?C?CSTOPTR
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?TIMER0INIT?SMARTCAR
+
+*** WARNING L15: MULTIPLE CALL TO SEGMENT
+    SEGMENT: ?PR?_CHECKBCC?SMARTCAR
+    CALLER1: ?PR?TIMER4_INTERRUPT?SMARTCAR
+    CALLER2: ?PR?TIMER0_INT?SMARTCAR
 
 *** WARNING L15: MULTIPLE CALL TO SEGMENT
     SEGMENT: ?PR?_SENDACKDATA?SMARTCAR
-    CALLER1: ?PR?UART?SMARTCAR
-    CALLER2: ?PR?TIMER4_INTERRUPT?SMARTCAR
+    CALLER1: ?PR?TIMER4_INTERRUPT?SMARTCAR
+    CALLER2: ?PR?TIMER0_INT?SMARTCAR
 
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_CHECKDATA?SMARTCAR
-    CALLER1: ?PR?UART?SMARTCAR
-    CALLER2: ?PR?TIMER4_INTERRUPT?SMARTCAR
-
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SENDDATA?SMARTCAR
-    CALLER1: ?PR?UART?SMARTCAR
-    CALLER2: ?PR?TIMER4_INTERRUPT?SMARTCAR
-
-Program Size: data=17.1 xdata=98 code=2245
+Program Size: data=111.1 xdata=93 code=2390
 LINK/LOCATE RUN COMPLETE.  3 WARNING(S),  0 ERROR(S)

@@ -1,21 +1,21 @@
-C51 COMPILER V8.02   DHT11                                                                 05/23/2020 22:42:39 PAGE 1   
+C51 COMPILER V8.02   DHT11                                                                 06/05/2020 00:15:53 PAGE 1   
 
 
 C51 COMPILER V8.02, COMPILATION OF MODULE DHT11
 OBJECT MODULE PLACED IN ..\hex\DHT11.obj
-COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\code\DHT11.c COMPACT PRINT(.\DHT11.lst) TABS(2) OBJECT(..\hex\DHT11.obj)
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\code\DHT11.c PRINT(.\DHT11.lst) TABS(2) OBJECT(..\hex\DHT11.obj)
 
 line level    source
 
    1          #include "DHT11.h"
    2          #include <intrins.h>
-   3          
-   4          typedef unsigned char U8; 
-   5          
-   6          #define FOSC    11059200L   //晶振频率，每秒振荡次数
-   7          
-   8          #define FOSC_12 FOSC / 12   //定时器0 晶振12分频
-   9          #include "STC15W4K58S4.h"
+   3          #include "STC15W4K58S4.h"
+   4          
+   5          typedef unsigned char U8; 
+   6          
+   7          #define FOSC    11059200L   //晶振频率，每秒振荡次数
+   8          
+   9          #define FOSC_12 FOSC / 12   //定时器0 晶振12分频
   10          
   11          sbit DQ=P4^5;
   12          
@@ -24,7 +24,7 @@ line level    source
   15          unsigned char DHT11_Read_Bit(void);
   16          unsigned char DHT11_Read_Byte(void);
   17          unsigned char DHT11_Read_Data(unsigned char *temp,unsigned char *humi);
-  18           unsigned char DATA_Temphui[3]={0x00,0x00,0x00};
+  18           unsigned char xdata DATA_Temphui[3]={0x00,0x00,0x00};
   19          
   20          void DELAY_CMS(unsigned char ms){
   21   1          unsigned int i;
@@ -62,7 +62,7 @@ line level    source
   53   2          while (--j);
   54   2        } while (--i);
   55   1      }
-C51 COMPILER V8.02   DHT11                                                                 05/23/2020 22:42:39 PAGE 2   
+C51 COMPILER V8.02   DHT11                                                                 06/05/2020 00:15:53 PAGE 2   
 
   56          
   57          /*
@@ -126,7 +126,7 @@ line level    source
  115   1        {
  116   2          retry++;
  117   2          Delay1us();
-C51 COMPILER V8.02   DHT11                                                                 05/23/2020 22:42:39 PAGE 3   
+C51 COMPILER V8.02   DHT11                                                                 06/05/2020 00:15:53 PAGE 3   
 
  118   2        }
  119   1        Delay50us();//等待50us
@@ -177,11 +177,11 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    286    ----
+   CODE SIZE        =    261    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =   ----    ----
-   PDATA SIZE       =      3      11
-   DATA SIZE        =   ----    ----
+   XDATA SIZE       =      3    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      11
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.

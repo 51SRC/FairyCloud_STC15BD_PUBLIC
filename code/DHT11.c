@@ -15,7 +15,7 @@ unsigned char DHT11_Check(void);
 unsigned char DHT11_Read_Bit(void);
 unsigned char DHT11_Read_Byte(void);
 unsigned char DHT11_Read_Data(unsigned char *temp,unsigned char *humi);
- unsigned char DATA_Temphui[3]={0x00,0x00,0x00};
+ unsigned char xdata DATA_Temphui[3]={0x00,0x00,0x00};
 
 void DELAY_CMS(unsigned char ms){
     unsigned int i;

@@ -21,7 +21,7 @@
 #include <string.h>  // 字符串处理头文件
 
 sbit LED = P3 ^ 2;  // LED
-sbit LOUND = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
+sbit Buzzer = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
 
 bit busy;
 
@@ -30,16 +30,14 @@ typedef int I16;
 typedef long I32;
 typedef unsigned char U8; 
 
-U8 DATA_LENGTH = 9;
-U8 DATA_GET[]=  { 0x7E, 0, 0, 0, 0, 0, 0, 0, 0x7E};
-U8 SRCHeader = 0x7E;
-U8 SRCTail = 0x7E;
-U8 SRCCID = 0x03;
-U8 SRCAID = 0x01;
+U8 SRCHeader = 0x23;
+U8 xdata SRCCID[] = {"SRC00000000000003"};// 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33
+
+U8  DATA_GET[55]={0};//缓冲区
+
 U8 CURRENT_LENGTH=0;
-U8 go=0;
+
 static	 unsigned int   Timer4_Count=1;
-unsigned char RES_DATA[]= { 0x7E, 0x00,0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7E};
 
 
 
@@ -50,22 +48,24 @@ unsigned char RES_DATA[]= { 0x7E, 0x00,0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7E}
 #define S1_S1 0x80              //P_SW1.7
 
 
-void SendString(char *s);
-void SendDatas(char *s);
+//void SendString(char *s);
 void DELAY_MS(unsigned int timeout);		//@11.0592MHz   1ms
 void DELAY_1MS() ;
-void SendData(char *s);
+//void SendData(char *s);
 void UART_TC (unsigned char *str);
 void UART_T (unsigned char UART_data); //定义串口发送数据变量
 void UART_R();//接受数据
 void ConnectServer();//连接服务器
 void USART_Init();
 void Device_Init();
-void ResponseData(unsigned char *RES_DATA);
-unsigned char CheckData(unsigned char *CHECK_DATA);
-void sendAckData(unsigned char *RES_DATA);
+void SendAckData(U8 len, unsigned char *RES_DATA);
 void ConnectSuccess();
 void Timer4Init();
+unsigned char CheckBCC(unsigned char len, unsigned char *recv);
+void ResponseData(unsigned char len,unsigned char *RES_DATA);
+void Buzzer_Actions_Status(unsigned char status);
+void Led_Actions_Status(unsigned char status);
+void Timer0Init(void);
 
 
 void main(){
@@ -95,6 +95,8 @@ void main(){
 		ConnectSuccess();
 		
 		Timer4Init();
+			//	Timer0Init();
+
     while(1) {
 			
 			if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
@@ -106,6 +108,125 @@ void main(){
 
     };
 }
+
+unsigned char CheckBCC(unsigned char len, unsigned char *recv){
+	  unsigned char bcc = 0x00;
+		unsigned char i=0;
+    for(i=0;i<len-1;i++)
+    {
+        bcc^=recv[i];
+    };
+    return bcc;
+
+}
+
+void ResponseData(unsigned char len,unsigned char *RES_DATA) {
+	
+	if(len <25){
+		return ;
+	}
+
+
+//校验和
+	if(CheckBCC(len, RES_DATA) == RES_DATA[len-1]){
+	
+		 unsigned char dataCmdFlag = RES_DATA[2];         //命令标识
+		 unsigned char dataCmdAck = RES_DATA[3];          //应答标识
+		// unsigned char dataCid[17] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};   //唯一设备号
+		 unsigned char j=0;
+		 unsigned char dataEncryptFlag = RES_DATA[21];    //加密方式
+		 unsigned char dataUintLength = (RES_DATA[22] << 8) | RES_DATA[23];  //数据长度
+	//	 unsigned char xdata  dataTimestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //时间数据
+
+	 //校验CID是否正确
+		 for(j=4;j<21;j++){
+			  if(SRCCID[j-4] != RES_DATA[j]){
+				 return;
+			 }
+		 }
+		
+		 //校验长度是否正确
+		 if ((25 + dataUintLength) != len) {
+				return ;
+		 }
+		 
+//		 //保存时间
+//		 for(j=0;j<6;j++){
+//			 dataTimestamp[j] = RES_DATA[24+j];
+//		 }
+		 
+		 if(dataCmdFlag == 0x01){//连接认证
+			 
+		 }else if(dataCmdFlag ==0x02){//实时信息主动上报
+			 
+		 }else if(dataCmdFlag ==0x03){//补发
+			 
+		 }else if(dataCmdFlag ==0x04){//设备登出
+			 
+		 }else if(dataCmdFlag ==0x05){//心跳
+			 
+		 }else if(dataCmdFlag ==0x80){//远程控制
+
+			 if(RES_DATA[30] == 0x02){//基础数据查询
+					unsigned char  light_status = LED ? 0x02 : 0x01;
+					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
+					unsigned char xdata ds[36] = {0X23, 0X23, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+					unsigned char dslen =36;
+				
+					 
+					ds[31] = DATA_Temphui[0];
+					ds[32] = 	DATA_Temphui[1];
+					ds[33] = light_status;
+					ds[34] = buzzy_status;
+					
+					if(dataCmdAck == 0xFE){
+						ds[3] = 0x01;//成功
+						
+					}
+				 ds[dslen-1] = CheckBCC(dslen, ds);
+						SendAckData(dslen,ds);
+
+				 
+				 
+			 }else if(RES_DATA[30] == 0x03){//基础控制
+				 			 
+					 unsigned char light = RES_DATA[31];
+					 unsigned char buzzy = RES_DATA[32];
+			 
+					 if( light==0x02){
+							Led_Actions_Status(0);
+						}else if( light==0x01){
+							Led_Actions_Status(1);
+						}
+					 
+					 if( buzzy==0x02){
+							Buzzer_Actions_Status(0);
+					 }else if( buzzy==0x01){
+							Buzzer_Actions_Status(1);
+					 }
+					 
+					if(dataCmdAck == 0xFE){
+						RES_DATA[3] = 0x01;//成功
+					
+					}
+						RES_DATA[len-1] = CheckBCC(len, RES_DATA);
+						SendAckData(len,RES_DATA);
+
+			 
+			 }else if(RES_DATA[30] == 0x7F){//重启
+				 	IAP_CONTR = 0X20;
+			 }
+			 
+			 
+			 
+		 }
+		 
+		
+	}
+	
+}
+
+
 
 void DELAY_1MS() {
     unsigned char i, j;
@@ -139,23 +260,23 @@ void DELAY_MS(unsigned int timeout)		//@11.0592MHz
 void Device_Init() {
 
     LED = 0;
-    LOUND = 0;
+    Buzzer = 0;
 }
 
 //初始化完成滴滴两声
 void ConnectSuccess(){
 
 	 LED = 1;
-	 LOUND = 1;
+	 Buzzer = 1;
 	 DELAY_MS(200);
 		LED = 0;
-		LOUND = 0;
+		Buzzer = 0;
 	 DELAY_MS(200);
 	  LED = 1;
-	  LOUND = 1;
+	  Buzzer = 1;
 	 DELAY_MS(200);
 	  LED = 0;
-	  LOUND = 0;
+	  Buzzer = 0;
 
 }
 
@@ -211,23 +332,6 @@ void Uart() interrupt 4 using 1
 }
 
 
-/*----------------------------
-发送串口数据
-----------------------------*/
-
-void  SendData(char *s)
-{
-    unsigned int i=0;
-
-    for(i=0; i<DATA_LENGTH; i++)
-    {
-				 
-        SBUF=s[i];
-				 while(!TI);		//检查发送中断标志位
-				TI = 0;	
-				}
-}
-
 void UART_T (unsigned char UART_data) { //定义串口发送数据变量
     SBUF = UART_data;	//将接收的数据发送回去
     while(!TI);		//检查发送中断标志位
@@ -248,109 +352,35 @@ void UART_TC (unsigned char *str) {
 
 void UART_R()
 {
-		if((CURRENT_LENGTH==0)&&(SBUF==0x7E))// 判断第一个是不是0x7e  不确定是不是尾部7e
-	   {go=1;}
+		TL0 = 0x00;		//设置定时初值
+	TH0 = 0xDC;		//设置定时初值
+	TF0 = 0;		//清除TF0标志
+	TR0 = 1;		//定时器0开始计时
+	ET0 = 1;	//允许中断
+	
+	
 
-			if((go==1)&&(CURRENT_LENGTH==1)&&(SBUF==0X7E))//第二个7e
-				 {CURRENT_LENGTH=0;} 
-
-			if(go==1)  //9个字符可以运行了
-			{
-				 DATA_GET[CURRENT_LENGTH]=SBUF;
-				CURRENT_LENGTH++;
-				
-				
-				if(CURRENT_LENGTH==DATA_LENGTH)
-				{
-						CURRENT_LENGTH=0;
-						go = 0;
-						ResponseData(DATA_GET);
-				}
-			}
+	 DATA_GET[CURRENT_LENGTH]=SBUF;
+	 CURRENT_LENGTH++;
+	
+	
 
 }
 
 
 
-///校验数据准确性 做CRC校验
-unsigned char CheckData(unsigned char *mes){
-    unsigned char crc = 0;
-    unsigned char len = 6;
-    unsigned char i=0;
-    unsigned char cs=0;
-    unsigned char message[] = {0,0,0,0,0,0};
-    unsigned char *s = message;
-    for( cs=0;cs<len;cs++){
-        
-        s[cs] = mes[cs+1];
-    }
-    
-    
-    while(len--)
+void SendAckData(U8 len, unsigned char *RES_DATA) {
+	
+		unsigned int i=0;
+    for(i=0; i<len; i++)
     {
-        crc ^= *s++;
-        for(i = 0;i < 8;i++)
-        {
-            if(crc & 0x01)
-            {
-                crc = (crc >> 1) ^ 0x8c;
-            }
-            else crc >>= 1;
-        }
-    }
-    return crc;
+				 
+				SBUF=RES_DATA[i];
+				while(!TI);		//检查发送中断标志位
+					TI = 0;	
+		}
 }
 
-//处理接收到的数据
-void ResponseData(unsigned char *RES_DATA) {
-
-    if((CheckData(RES_DATA) == RES_DATA[DATA_LENGTH-2]) && RES_DATA[1]== SRCCID &&  RES_DATA[2]== SRCAID && RES_DATA[4]== 0x01 ) {
-
-        if(RES_DATA[3]==0x00 ) {
-						if(DATA_Temphui[2]==1){
-									RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
-									RES_DATA[5]= DATA_Temphui[0];//高两位数据
-									RES_DATA[6]= DATA_Temphui[1];//进制转换  低两位数据位
-								//	DATA_Temphui[2]=0;
-						}	
-            sendAckData(RES_DATA);
-        } else	if(RES_DATA[3]==0x03 && RES_DATA[6]==0x02) {
-            LED = 1;
-            sendAckData(RES_DATA);
-        } else	if(RES_DATA[3]==0x03 && RES_DATA[6]==0x01) {
-            LED = 0;
-            sendAckData(RES_DATA);
-        } else if(RES_DATA[3]==0x02 && RES_DATA[6]==0x02) {
-            LOUND = 1;
-            sendAckData(RES_DATA);
-        } else	if(RES_DATA[3]==0x02 && RES_DATA[6]==0x01) {
-            LOUND = 0;
-            sendAckData(RES_DATA);
-        }
-    }
-
-}
-
-//处理待发送的数据
-void sendAckData(unsigned char *RES_DATA) {
-
-
-    unsigned char DATA_SEND[]= { 0x7E, 0x00,0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x7E};
-
-
-    DATA_SEND[0]= SRCHeader;
-    DATA_SEND[1]= SRCCID;
-    DATA_SEND[2]= SRCAID;
-    DATA_SEND[3]= RES_DATA[3];
-    DATA_SEND[5]= RES_DATA[5];
-    DATA_SEND[6]= RES_DATA[6];
-		DATA_SEND[7]= CheckData(DATA_SEND);
-
-    DATA_SEND[DATA_LENGTH-1]= SRCTail;
-		
-    SendData(DATA_SEND);
-
-}
 
 //初始化ESP8266WiFi模块，并连接到服务器
 void ConnectServer() {
@@ -384,8 +414,6 @@ void ConnectServer() {
 
     UART_TC("AT+CIPSEND\r\n\0");	 // 进入透传模式 准备模块与电脑进行互传数据
     DELAY_MS( 1000);
-
-    CURRENT_LENGTH=0;
 		
 		
 
@@ -405,39 +433,95 @@ void Timer4Init(void)		//5毫秒@11.0592MHz
 //10s自动上报温湿度
 void Timer4_interrupt() interrupt 20    //定时中断入口
 {
+	
+	U8 xdata RES_DATA[]= { 0X23, 0X23, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0X23, 0X24, 0X02, 0X02, 0xB0};
+unsigned char RES_LEN= 36;
+
 		if(Timer4_Count>=2000){
+			
+				
+			unsigned char  light_status = LED ? 0x02 : 0x01;
+			unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
+		unsigned char j = 4;
+		
+//			U8 *SRCCID = "SRC00000000000001";
+//		for(j=4;j<=21;j++){
+//			RES_DATA[j] = SRCCID[j-4];
+//		}		
+		
 			Timer4_Count = 1;
 			
-			if(DATA_Temphui[2]==1){
-						RES_DATA[3]=0x04;//高两位数据 4代表温湿度指令
-						RES_DATA[5]= DATA_Temphui[0];//高两位数据
-						RES_DATA[6]= DATA_Temphui[1];//进制转换  低两位数据位
-					//	DATA_Temphui[2]=0;
-			}	
+
+			if(DATA_Temphui[2]==1)
+			{
+					DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
+					
+			}
+
+			RES_DATA[31] = DATA_Temphui[0];
+			RES_DATA[32] = 	DATA_Temphui[1];
+			RES_DATA[33] = light_status;
+			RES_DATA[34] = buzzy_status,
+			RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
+					
+			SendAckData(RES_LEN,RES_DATA);
 			
-			sendAckData(RES_DATA);
 		}else{
 			
-			Timer4_Count++;
+		Timer4_Count++;
 		}
+		
 }
 
 
 
-//void Timer0Init(void)		//10毫秒@11.0592MHz
-//{
-//	AUXR &= 0x7F;		//定时器时钟12T模式
-//	TMOD &= 0xF0;		//设置定时器模式
-//	TMOD |= 0x01;		//设置定时器模式
-//	TL0 = 0x00;		//设置定时初值
-//	TH0 = 0xDC;		//设置定时初值
-//	TF0 = 0;		//清除TF0标志
-//	TR0 = 1;		//定时器0开始计时
-//	ET0 = 1;	//允许中断
-//}
 
-///********************* Timer0中断函数************************/
-//void timer0_int (void) interrupt 1
-//{
-//   
-//}
+
+void Timer0Init(void)		//10毫秒@11.0592MHz
+{
+	AUXR &= 0x7F;		//定时器时钟12T模式
+	TMOD &= 0xF0;		//设置定时器模式
+	TMOD |= 0x01;		//设置定时器模式
+	TL0 = 0x00;		//设置定时初值
+	TH0 = 0x04;		//设置定时初值
+	TF0 = 0;		//清除TF0标志
+	TR0 = 1;		//定时器0开始计时
+	ET0 = 1;	//允许中断
+}
+
+
+
+/********************* Timer0中断函数************************/
+void timer0_int (void) interrupt 1
+{
+	TL0 = 0x00;		//设置定时初值
+	TH0 = 0x04;		//设置定时初值
+	TF0 = 0;		//清除TF0标志
+	TR0 = 0;		//定时器0开始计时
+	ET0 = 0;	//允许中断
+	
+	ResponseData(CURRENT_LENGTH,DATA_GET);		
+	CURRENT_LENGTH = 0;
+			
+}
+
+
+void Led_Actions_Status(unsigned char status){
+
+	if(status){
+		LED = 0;
+	}else{
+		LED = 1;
+	}
+
+}
+
+void Buzzer_Actions_Status(unsigned char status){
+
+	if(status){
+		Buzzer = 0;
+	}else{
+		Buzzer = 1;
+	}
+
+}
