@@ -33,7 +33,8 @@ typedef unsigned char U8;
 U8 SRCHeader = 0x23;
 U8 xdata SRCCID[] = {"SRC00000000000003"};// 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33
 
-U8  DATA_GET[55]={0};//缓冲区
+
+U8 xdata DATA_GET[200]={0};//缓冲区
 
 U8 CURRENT_LENGTH=0;
 
@@ -48,10 +49,8 @@ static	 unsigned int   Timer4_Count=1;
 #define S1_S1 0x80              //P_SW1.7
 
 
-//void SendString(char *s);
 void DELAY_MS(unsigned int timeout);		//@11.0592MHz   1ms
 void DELAY_1MS() ;
-//void SendData(char *s);
 void UART_TC (unsigned char *str);
 void UART_T (unsigned char UART_data); //定义串口发送数据变量
 void UART_R();//接受数据
@@ -95,9 +94,17 @@ void main(){
 		ConnectSuccess();
 		
 		Timer4Init();
-			//	Timer0Init();
+		Timer0Init();
+
+	  WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
+                            //设置看门狗定时器分频数为32,溢出时间如下:
+                            //11.0592M : 1.14s
+                            //18.432M  : 0.68s
+                            //20M      : 0.63s
+    WDT_CONTR |= 0x20;      //启动看门狗
 
     while(1) {
+			WDT_CONTR |= 0x10;  //喂狗程序
 			
 			if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
 			{
@@ -136,7 +143,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 		 unsigned char j=0;
 		 unsigned char dataEncryptFlag = RES_DATA[21];    //加密方式
 		 unsigned char dataUintLength = (RES_DATA[22] << 8) | RES_DATA[23];  //数据长度
-	//	 unsigned char xdata  dataTimestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //时间数据
+		 unsigned char xdata  dataTimestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //时间数据
 
 	 //校验CID是否正确
 		 for(j=4;j<21;j++){
@@ -150,10 +157,10 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 				return ;
 		 }
 		 
-//		 //保存时间
-//		 for(j=0;j<6;j++){
-//			 dataTimestamp[j] = RES_DATA[24+j];
-//		 }
+		 //保存时间
+		 for(j=0;j<6;j++){
+			 dataTimestamp[j] = RES_DATA[24+j];
+		 }
 		 
 		 if(dataCmdFlag == 0x01){//连接认证
 			 
@@ -293,7 +300,8 @@ void USART_Init()
     ACC |= S1_S0;               //(P3.6/RxD_2, P3.7/TxD_2)
     P_SW1 = ACC;
     SCON = 0x50;                //8位可变波特率
-
+    PS = 1;
+		
 //  ACC = P_SW1;
 //  ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=1
 //  ACC |= S1_S1;               //(P1.6/RxD_3, P1.7/TxD_3)
@@ -419,12 +427,19 @@ void ConnectServer() {
 
 }
 
-void Timer4Init(void)		//5毫秒@11.0592MHz
+void Timer4Init(void)		
 {
-	T4T3M |= 0x20;		//定时器时钟1T模式
+	//50 毫秒@11.0592MHz
+	T4T3M &= 0xDF;		//定时器时钟12T模式
 	T4L = 0x00;		//设置定时初值
-	T4H = 0x28;		//设置定时初值
+	T4H = 0x4C;		//设置定时初值
 	T4T3M |= 0x80;		//定时器4开始计时
+	
+	//5毫秒@11.0592MHz
+//	T4T3M |= 0x20;		//定时器时钟1T模式
+//	T4L = 0x00;		//设置定时初值
+//	T4H = 0x28;		//设置定时初值
+//	T4T3M |= 0x80;		//定时器4开始计时
 		IE2 |= 0x40;		//开定时器4中断
 		EA=1; 	//总中断开启
 }
@@ -437,26 +452,21 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 	U8 xdata RES_DATA[]= { 0X23, 0X23, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0X23, 0X24, 0X02, 0X02, 0xB0};
 unsigned char RES_LEN= 36;
 
-		if(Timer4_Count>=2000){
+		if(Timer4_Count>=200){
 			
-				
 			unsigned char  light_status = LED ? 0x02 : 0x01;
 			unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-		unsigned char j = 4;
-		
-//			U8 *SRCCID = "SRC00000000000001";
-//		for(j=4;j<=21;j++){
-//			RES_DATA[j] = SRCCID[j-4];
-//		}		
-		
-			Timer4_Count = 1;
-			
+		  unsigned char j = 4;
+					Timer4_Count = 1;
 
-			if(DATA_Temphui[2]==1)
-			{
-					DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
-					
-			}
+			for(j=4;j<=21;j++){
+				RES_DATA[j] = SRCCID[j-4];
+			}		
+
+//			if(DATA_Temphui[2]==1)
+//			{
+//					DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
+//			}
 
 			RES_DATA[31] = DATA_Temphui[0];
 			RES_DATA[32] = 	DATA_Temphui[1];
@@ -468,7 +478,7 @@ unsigned char RES_LEN= 36;
 			
 		}else{
 			
-		Timer4_Count++;
+		    Timer4_Count++;
 		}
 		
 }
@@ -483,7 +493,7 @@ void Timer0Init(void)		//10毫秒@11.0592MHz
 	TMOD &= 0xF0;		//设置定时器模式
 	TMOD |= 0x01;		//设置定时器模式
 	TL0 = 0x00;		//设置定时初值
-	TH0 = 0x04;		//设置定时初值
+	TH0 = 0xB8;		//设置定时初值
 	TF0 = 0;		//清除TF0标志
 	TR0 = 1;		//定时器0开始计时
 	ET0 = 1;	//允许中断
@@ -495,7 +505,7 @@ void Timer0Init(void)		//10毫秒@11.0592MHz
 void timer0_int (void) interrupt 1
 {
 	TL0 = 0x00;		//设置定时初值
-	TH0 = 0x04;		//设置定时初值
+	TH0 = 0xB8;		//设置定时初值
 	TF0 = 0;		//清除TF0标志
 	TR0 = 0;		//定时器0开始计时
 	ET0 = 0;	//允许中断
