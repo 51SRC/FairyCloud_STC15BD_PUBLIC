@@ -31,10 +31,9 @@ typedef long I32;
 typedef unsigned char U8; 
 
 U8 SRCHeader = 0x23;
-U8 xdata SRCCID[] = {"SRC00000000000003"};// 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33
+U8 xdata SRCCID[] = {"SRC00000000000003"};
 
-
-U8 xdata DATA_GET[200]={0};//缓冲区
+U8 xdata DATA_GET[500]={0};//缓冲区长度
 
 U8 CURRENT_LENGTH=0;
 
@@ -129,7 +128,7 @@ unsigned char CheckBCC(unsigned char len, unsigned char *recv){
 
 void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 	
-	if(len <25){
+	if(len <26){
 		return ;
 	}
 
@@ -137,68 +136,72 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 //校验和
 	if(CheckBCC(len, RES_DATA) == RES_DATA[len-1]){
 	
-		 unsigned char dataCmdFlag = RES_DATA[2];         //命令标识
-		 unsigned char dataCmdAck = RES_DATA[3];          //应答标识
-		// unsigned char dataCid[17] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};   //唯一设备号
+		 unsigned int dataCmdFlag =(RES_DATA[2] << 8) | RES_DATA[3];         //命令标识
+		 unsigned char dataCmdAck = RES_DATA[4];          //应答标识
 		 unsigned char j=0;
-		 unsigned char dataEncryptFlag = RES_DATA[21];    //加密方式
-		 unsigned char dataUintLength = (RES_DATA[22] << 8) | RES_DATA[23];  //数据长度
+		 unsigned char dataEncryptFlag = RES_DATA[22];    //加密方式
+		 unsigned char dataUintLength = (RES_DATA[23] << 8) | RES_DATA[24];  //数据长度
 		 unsigned char xdata  dataTimestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //时间数据
 
 	 //校验CID是否正确
-		 for(j=4;j<21;j++){
-			  if(SRCCID[j-4] != RES_DATA[j]){
+		 for(j=5;j<22;j++){
+			  if(SRCCID[j-5] != RES_DATA[j]){
 				 return;
 			 }
 		 }
 		
 		 //校验长度是否正确
-		 if ((25 + dataUintLength) != len) {
+		 if ((26 + dataUintLength) != len) {
 				return ;
 		 }
 		 
 		 //保存时间
 		 for(j=0;j<6;j++){
-			 dataTimestamp[j] = RES_DATA[24+j];
+			 dataTimestamp[j] = RES_DATA[25+j];
 		 }
 		 
-		 if(dataCmdFlag == 0x01){//连接认证
+		 if(dataCmdFlag == 0x8001){//连接认证
 			 
-		 }else if(dataCmdFlag ==0x02){//实时信息主动上报
+		 }else if(dataCmdFlag ==0x8002){//实时信息主动上报
 			 
-		 }else if(dataCmdFlag ==0x03){//补发
+		 }else if(dataCmdFlag ==0x8003){//补发
 			 
-		 }else if(dataCmdFlag ==0x04){//设备登出
+		 }else if(dataCmdFlag ==0x8004){//设备登出
 			 
-		 }else if(dataCmdFlag ==0x05){//心跳
+		 }else if(dataCmdFlag ==0x8005){//心跳
 			 
-		 }else if(dataCmdFlag ==0x80){//远程控制
+		 }else if(dataCmdFlag ==0x8006){//远程控制
 
-			 if(RES_DATA[30] == 0x02){//基础数据查询
+			 if(RES_DATA[31] == 0x02){//基础数据查询
 					unsigned char  light_status = LED ? 0x02 : 0x01;
 					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-					unsigned char xdata ds[36] = {0X23, 0X23, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
-					unsigned char dslen =36;
+					unsigned char xdata ds[37] = {0X23, 0X23, 0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+					unsigned char dslen =37;
 				
-					 
-					ds[31] = DATA_Temphui[0];
-					ds[32] = 	DATA_Temphui[1];
-					ds[33] = light_status;
-					ds[34] = buzzy_status;
+					ds[2] = 0X10;
+					ds[3] = 0X02;
 					
 					if(dataCmdAck == 0xFE){
-						ds[3] = 0x01;//成功
+						ds[4] = 0x01;//成功
 						
 					}
+							
+					ds[32] = DATA_Temphui[0];
+					ds[33] = DATA_Temphui[1];
+					ds[34] = light_status;
+					ds[35] = buzzy_status;
+					
+			
+					
 				 ds[dslen-1] = CheckBCC(dslen, ds);
 						SendAckData(dslen,ds);
 
 				 
 				 
-			 }else if(RES_DATA[30] == 0x03){//基础控制
+			 }else if(RES_DATA[31] == 0x03){//基础控制
 				 			 
-					 unsigned char light = RES_DATA[31];
-					 unsigned char buzzy = RES_DATA[32];
+					 unsigned char light = RES_DATA[32];
+					 unsigned char buzzy = RES_DATA[33];
 			 
 					 if( light==0x02){
 							Led_Actions_Status(0);
@@ -212,15 +215,18 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 							Buzzer_Actions_Status(1);
 					 }
 					 
+					RES_DATA[2] = 0X10;
+					RES_DATA[3] = 0X02;
+
 					if(dataCmdAck == 0xFE){
-						RES_DATA[3] = 0x01;//成功
+						RES_DATA[4] = 0x01;//成功
 					
 					}
 						RES_DATA[len-1] = CheckBCC(len, RES_DATA);
 						SendAckData(len,RES_DATA);
 
 			 
-			 }else if(RES_DATA[30] == 0x7F){//重启
+			 }else if(RES_DATA[31] == 0x7F){//重启
 				 	IAP_CONTR = 0X20;
 			 }
 			 
@@ -411,7 +417,7 @@ void ConnectServer() {
     DELAY_MS(15000);
 
 
-    UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");	// 连接到指定TCP服务器
+    UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");	// 连接到指定TCP服务器192.168.0.2
     DELAY_MS( 5000);
 
     UART_TC("AT+CIPMODE=1\r\n\0"); // 设置透传模式
@@ -449,18 +455,18 @@ void Timer4Init(void)
 void Timer4_interrupt() interrupt 20    //定时中断入口
 {
 	
-	U8 xdata RES_DATA[]= { 0X23, 0X23, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0X23, 0X24, 0X02, 0X02, 0xB0};
-unsigned char RES_LEN= 36;
+	U8 xdata RES_DATA[]= { 0X23, 0X23,0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0X23, 0X24, 0X02, 0X02, 0xB0};
+unsigned char RES_LEN= 37;
 
 		if(Timer4_Count>=200){
 			
 			unsigned char  light_status = LED ? 0x02 : 0x01;
 			unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-		  unsigned char j = 4;
+		  unsigned char j = 5;
 					Timer4_Count = 1;
 
-			for(j=4;j<=21;j++){
-				RES_DATA[j] = SRCCID[j-4];
+			for(j=5;j<=22;j++){
+				RES_DATA[j] = SRCCID[j-5];
 			}		
 
 //			if(DATA_Temphui[2]==1)
@@ -468,10 +474,10 @@ unsigned char RES_LEN= 36;
 //					DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
 //			}
 
-			RES_DATA[31] = DATA_Temphui[0];
-			RES_DATA[32] = 	DATA_Temphui[1];
-			RES_DATA[33] = light_status;
-			RES_DATA[34] = buzzy_status,
+			RES_DATA[32] = DATA_Temphui[0];
+			RES_DATA[33] = 	DATA_Temphui[1];
+			RES_DATA[34] = light_status;
+			RES_DATA[35] = buzzy_status,
 			RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
 					
 			SendAckData(RES_LEN,RES_DATA);
