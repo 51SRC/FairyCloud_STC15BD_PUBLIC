@@ -1,4 +1,4 @@
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 1   
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 1   
 
 
 C51 COMPILER V8.02, COMPILATION OF MODULE SMARTCAR
@@ -62,7 +62,7 @@ line level    source
   52          void DELAY_1MS() ;
   53          void UART_TC (unsigned char *str);
   54          void UART_T (unsigned char UART_data); //定义串口发送数据变量
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 2   
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 2   
 
   55          void UART_R();//接受数据
   56          void ConnectServer();//连接服务器
@@ -126,7 +126,7 @@ line level    source
  114   2      
  115   2          };
  116   1      }
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 3   
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 3   
 
  117          
  118          unsigned char CheckBCC(unsigned char len, unsigned char *recv){
@@ -186,404 +186,454 @@ line level    source
  172   3             
  173   3           }else if(dataCmdFlag ==0x8006){//远程控制
  174   3      
- 175   3             if(RES_DATA[31] == 0x02){//基础数据查询
+ 175   3             if(RES_DATA[31] == 0x02){//基础数据查询  温度、湿度、灯、喇叭；请见【信息体定义】
  176   4                unsigned char  light_status = LED ? 0x02 : 0x01;
  177   4                unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
- 178   4                unsigned char xdata ds[37] = {0X23, 0X23, 0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30,
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 4   
+ 178   4                unsigned char xdata ds[37] = {0};//{0X23, 0X23, 0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30,
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 4   
 
-             - 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02,
-             - 0x00, 0x00, 0x00, 0x00, 0x00};
+             - 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38,
+             - 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
  179   4                unsigned char dslen =37;
- 180   4              
- 181   4                ds[2] = 0X10;
- 182   4                ds[3] = 0X02;
- 183   4                
- 184   4                if(dataCmdAck == 0xFE){
- 185   5                  ds[4] = 0x01;//成功
- 186   5                  
- 187   5                }
- 188   4                    
- 189   4                ds[32] = DATA_Temphui[0];
- 190   4                ds[33] = DATA_Temphui[1];
- 191   4                ds[34] = light_status;
- 192   4                ds[35] = buzzy_status;
- 193   4                
- 194   4            
- 195   4                
- 196   4               ds[dslen-1] = CheckBCC(dslen, ds);
- 197   4                  SendAckData(dslen,ds);
+ 180   4                unsigned char j=0;
+ 181   4              
+ 182   4                ds[0] = 0X23;//数据头
+ 183   4                ds[1] = 0X23;
+ 184   4                ds[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
+ 185   4                ds[3] = 0X06;
+ 186   4                
+ 187   4                if(dataCmdAck == 0xFE){//应答标识
+ 188   5                  ds[4] = 0x01;//成功
+ 189   5                  
+ 190   5                }
+ 191   4            
+ 192   4               for(j=0;j<17;j++){//CID赋值
+ 193   5                  ds[j+5] = SRCCID[j];
+ 194   5               }
+ 195   4              ds[22] = 0X01;//不加密
+ 196   4              ds[23] = 0X00;//长度两位 高位00
+ 197   4              ds[24] = 0X0B;//低位0B 一共11位
  198   4      
- 199   4               
- 200   4               
- 201   4             }else if(RES_DATA[31] == 0x03){//基础控制
- 202   4                     
- 203   4                 unsigned char light = RES_DATA[32];
- 204   4                 unsigned char buzzy = RES_DATA[33];
- 205   4             
- 206   4                 if( light==0x02){
- 207   5                    Led_Actions_Status(0);
- 208   5                  }else if( light==0x01){
- 209   5                    Led_Actions_Status(1);
- 210   5                  }
- 211   4                 
- 212   4                 if( buzzy==0x02){
- 213   5                    Buzzer_Actions_Status(0);
- 214   5                 }else if( buzzy==0x01){
- 215   5                    Buzzer_Actions_Status(1);
- 216   5                 }
- 217   4                 
- 218   4                RES_DATA[2] = 0X10;
- 219   4                RES_DATA[3] = 0X02;
- 220   4      
- 221   4                if(dataCmdAck == 0xFE){
- 222   5                  RES_DATA[4] = 0x01;//成功
- 223   5                
- 224   5                }
- 225   4                  RES_DATA[len-1] = CheckBCC(len, RES_DATA);
- 226   4                  SendAckData(len,RES_DATA);
- 227   4      
- 228   4             
- 229   4             }else if(RES_DATA[31] == 0x7F){//重启
- 230   4                IAP_CONTR = 0X20;
- 231   4             }
- 232   3             
- 233   3             
- 234   3             
- 235   3           }
- 236   2           
- 237   2          
- 238   2        }
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 5   
+ 199   4              ds[25] = 0X14;//年 0x14+2000 = 2020 
+ 200   4              ds[26] = 0X05;//月 
+ 201   4              ds[27] = 0X18;//日 
+ 202   4              ds[28] = 0X15;//时 
+ 203   4              ds[29] = 0X24;//分
+ 204   4              ds[30] = 0X08;//秒
+ 205   4              
+ 206   4              ds[31] = 0X02;//基础查询   编码
+ 207   4      
+ 208   4      
+ 209   4                ds[32] = DATA_Temphui[0]; //基础数据4个字节的数据
+ 210   4                ds[33] = DATA_Temphui[1];
+ 211   4                ds[34] = light_status;
+ 212   4                ds[35] = buzzy_status;
+ 213   4                
+ 214   4            
+ 215   4                
+ 216   4               ds[dslen-1] = CheckBCC(dslen, ds);//计算校验和  放最后一位
+ 217   4                  SendAckData(dslen,ds);
+ 218   4      
+ 219   4               
+ 220   4               
+ 221   4             }else if(RES_DATA[31] == 0x03){//基础控制  灯、喇叭；请见【信息体定义】
+ 222   4                     
+ 223   4                 unsigned char light = RES_DATA[32];
+ 224   4                 unsigned char buzzy = RES_DATA[33];
+ 225   4             
+ 226   4                 if( light==0x02){
+ 227   5                    Led_Actions_Status(0);
+ 228   5                  }else if( light==0x01){
+ 229   5                    Led_Actions_Status(1);
+ 230   5                  }
+ 231   4                 
+ 232   4                 if( buzzy==0x02){
+ 233   5                    Buzzer_Actions_Status(0);
+ 234   5                 }else if( buzzy==0x01){
+ 235   5                    Buzzer_Actions_Status(1);
+ 236   5                 }
+ 237   4                 
+ 238   4                 
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 5   
 
- 239   1        
- 240   1      }
- 241          
- 242          
- 243          
- 244          void DELAY_1MS() {
- 245   1          unsigned char i, j;
- 246   1      
- 247   1          _nop_();
- 248   1          _nop_();
- 249   1          _nop_();
- 250   1          i = 11;
- 251   1          j = 190;
- 252   1          do
- 253   1          {
- 254   2              while (--j);
- 255   2          } while (--i);
- 256   1      
- 257   1      
- 258   1      }
- 259          
- 260          void DELAY_MS(unsigned int timeout)   //@11.0592MHz
- 261          {
- 262   1          int t = 0;
- 263   1          while (t < timeout)
- 264   1          {
- 265   2              t++;
- 266   2              DELAY_1MS();
- 267   2          }
- 268   1      }
- 269          
- 270          
- 271          
- 272          //初始化LED和蜂鸣器
- 273          void Device_Init() {
- 274   1      
- 275   1          LED = 0;
- 276   1          Buzzer = 0;
- 277   1      }
- 278          
- 279          //初始化完成滴滴两声
- 280          void ConnectSuccess(){
- 281   1      
- 282   1         LED = 1;
- 283   1         Buzzer = 1;
- 284   1         DELAY_MS(200);
- 285   1          LED = 0;
- 286   1          Buzzer = 0;
- 287   1         DELAY_MS(200);
- 288   1          LED = 1;
- 289   1          Buzzer = 1;
- 290   1         DELAY_MS(200);
- 291   1          LED = 0;
- 292   1          Buzzer = 0;
- 293   1      
- 294   1      }
- 295          
- 296          
- 297          void USART_Init()
- 298          {
- 299   1      
- 300   1      //   ACC = P_SW1;
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 6   
+ 239   4                 
+ 240   4                 
+ 241   4                RES_DATA[0] = 0X23;
+ 242   4                RES_DATA[1] = 0X23;
+ 243   4                RES_DATA[2] = 0X10;
+ 244   4                RES_DATA[3] = 0X06;
+ 245   4      
+ 246   4                if(dataCmdAck == 0xFE){
+ 247   5                  RES_DATA[4] = 0x01;//成功
+ 248   5                
+ 249   5                }
+ 250   4                if(dataCmdAck == 0xFE){//应答标识
+ 251   5                  RES_DATA[4] = 0x01;//成功
+ 252   5                  
+ 253   5                }
+ 254   4            
+ 255   4               for(j=0;j<17;j++){//CID赋值
+ 256   5                  RES_DATA[j+5] = SRCCID[j];
+ 257   5               }
+ 258   4              RES_DATA[22] = 0X01;//不加密
+ 259   4              RES_DATA[23] = 0X00;//长度两位 高位00
+ 260   4              RES_DATA[24] = 0X09;//低位09 一共9位    6位的时间+1位的命令标识 + 2位的数据
+ 261   4      
+ 262   4              RES_DATA[25] = 0X14;//年 0x14+2000 = 2020 
+ 263   4              RES_DATA[26] = 0X05;//月 
+ 264   4              RES_DATA[27] = 0X18;//日 
+ 265   4              RES_DATA[28] = 0X15;//时 
+ 266   4              RES_DATA[29] = 0X24;//分
+ 267   4              RES_DATA[30] = 0X08;//秒
+ 268   4              
+ 269   4              RES_DATA[31] = 0X03;//基础控制  灯、喇叭；请见【信息体定义】
+ 270   4              
+ 271   4      //        RES_DATA[32] = RES_DATA[32];// 这两位不用改动  
+ 272   4      //        RES_DATA[33] = RES_DATA[33];
+ 273   4              
+ 274   4              
+ 275   4                  RES_DATA[len-1] = CheckBCC(len, RES_DATA);//这一帧数据 35个字节 len=35
+ 276   4                  SendAckData(len,RES_DATA);
+ 277   4      
+ 278   4             
+ 279   4             }else if(RES_DATA[31] == 0x7F){//重启
+ 280   4                IAP_CONTR = 0X20;
+ 281   4             }
+ 282   3             
+ 283   3             
+ 284   3             
+ 285   3           }
+ 286   2           
+ 287   2          
+ 288   2        }
+ 289   1        
+ 290   1      }
+ 291          
+ 292          
+ 293          
+ 294          void DELAY_1MS() {
+ 295   1          unsigned char i, j;
+ 296   1      
+ 297   1          _nop_();
+ 298   1          _nop_();
+ 299   1          _nop_();
+ 300   1          i = 11;
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 6   
 
- 301   1      //    ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=0
- 302   1      //    P_SW1 = ACC;                //(P3.0/RxD, P3.1/TxD)
- 303   1      
- 304   1          ACC = P_SW1;
- 305   1          ACC &= ~(S1_S0 | S1_S1);    //S1_S0=1 S1_S1=0
- 306   1          ACC |= S1_S0;               //(P3.6/RxD_2, P3.7/TxD_2)
- 307   1          P_SW1 = ACC;
- 308   1          SCON = 0x50;                //8位可变波特率
- 309   1          PS = 1;
- 310   1          
- 311   1      //  ACC = P_SW1;
- 312   1      //  ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=1
- 313   1      //  ACC |= S1_S1;               //(P1.6/RxD_3, P1.7/TxD_3)
- 314   1      //  P_SW1 = ACC;
- 315   1      
- 316   1      
- 317   1          AUXR = 0x40;                //定时器1为1T模式
- 318   1          TMOD = 0x00;                //定时器1为模式0(16位自动重载)
- 319   1          TL1 = (65536 - (FOSC/4/BAUD));   //设置波特率重装值
- 320   1          TH1 = (65536 - (FOSC/4/BAUD))>>8;
- 321   1          TR1 = 1;                    //定时器1开始启动
- 322   1          ES = 1;                     //使能串口中断
- 323   1          EA = 1;
+ 301   1          j = 190;
+ 302   1          do
+ 303   1          {
+ 304   2              while (--j);
+ 305   2          } while (--i);
+ 306   1      
+ 307   1      
+ 308   1      }
+ 309          
+ 310          void DELAY_MS(unsigned int timeout)   //@11.0592MHz
+ 311          {
+ 312   1          int t = 0;
+ 313   1          while (t < timeout)
+ 314   1          {
+ 315   2              t++;
+ 316   2              DELAY_1MS();
+ 317   2          }
+ 318   1      }
+ 319          
+ 320          
+ 321          
+ 322          //初始化LED和蜂鸣器
+ 323          void Device_Init() {
  324   1      
- 325   1      }
- 326          
- 327          /*----------------------------
- 328          UART 中断服务程序
- 329          -----------------------------*/
- 330          void Uart() interrupt 4 using 1
- 331          {
- 332   1          if (RI)
- 333   1          {
- 334   2              while(!RI);
- 335   2              RI=0;
- 336   2              UART_R();
- 337   2              busy = 0;
- 338   2      
- 339   2          }
- 340   1          if (TI)
- 341   1          {
- 342   2              while(!TI);
- 343   2              TI = 0;                 //清除TI位
- 344   2              busy = 0;               //清忙标志
- 345   2          }
- 346   1      }
- 347          
- 348          
- 349          void UART_T (unsigned char UART_data) { //定义串口发送数据变量
- 350   1          SBUF = UART_data; //将接收的数据发送回去
- 351   1          while(!TI);   //检查发送中断标志位
- 352   1          TI = 0;     //令发送中断标志位为0（软件清零）
- 353   1      }
- 354          
- 355          
- 356          void UART_TC (unsigned char *str) {
- 357   1          while(*str != '\0') {
- 358   2              UART_T(*str);
- 359   2              *str++;
-*** WARNING C275 IN LINE 359 OF ..\CODE\SMARTCAR.C: expression with possibly no effect
- 360   2          }
- 361   1          *str = 0;
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 7   
+ 325   1          LED = 0;
+ 326   1          Buzzer = 0;
+ 327   1      }
+ 328          
+ 329          //初始化完成滴滴两声
+ 330          void ConnectSuccess(){
+ 331   1      
+ 332   1         LED = 1;
+ 333   1         Buzzer = 1;
+ 334   1         DELAY_MS(200);
+ 335   1          LED = 0;
+ 336   1          Buzzer = 0;
+ 337   1         DELAY_MS(200);
+ 338   1          LED = 1;
+ 339   1          Buzzer = 1;
+ 340   1         DELAY_MS(200);
+ 341   1          LED = 0;
+ 342   1          Buzzer = 0;
+ 343   1      
+ 344   1      }
+ 345          
+ 346          
+ 347          void USART_Init()
+ 348          {
+ 349   1      
+ 350   1      //   ACC = P_SW1;
+ 351   1      //    ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=0
+ 352   1      //    P_SW1 = ACC;                //(P3.0/RxD, P3.1/TxD)
+ 353   1      
+ 354   1          ACC = P_SW1;
+ 355   1          ACC &= ~(S1_S0 | S1_S1);    //S1_S0=1 S1_S1=0
+ 356   1          ACC |= S1_S0;               //(P3.6/RxD_2, P3.7/TxD_2)
+ 357   1          P_SW1 = ACC;
+ 358   1          SCON = 0x50;                //8位可变波特率
+ 359   1          PS = 1;
+ 360   1          
+ 361   1      //  ACC = P_SW1;
+ 362   1      //  ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=1
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 7   
 
- 362   1      }
- 363          
- 364          
- 365          //串口  接收ESP8266的串口数据，并校验数据的完整性9位
- 366          
- 367          void UART_R()
- 368          {
- 369   1          TL0 = 0x00;   //设置定时初值
- 370   1        TH0 = 0xDC;   //设置定时初值
- 371   1        TF0 = 0;    //清除TF0标志
- 372   1        TR0 = 1;    //定时器0开始计时
- 373   1        ET0 = 1;  //允许中断
- 374   1        
- 375   1        
- 376   1      
- 377   1         DATA_GET[CURRENT_LENGTH]=SBUF;
- 378   1         CURRENT_LENGTH++;
- 379   1        
- 380   1        
- 381   1      
- 382   1      }
- 383          
- 384          
- 385          
- 386          void SendAckData(U8 len, unsigned char *RES_DATA) {
- 387   1        
- 388   1          unsigned int i=0;
- 389   1          for(i=0; i<len; i++)
- 390   1          {
- 391   2               
- 392   2              SBUF=RES_DATA[i];
- 393   2              while(!TI);   //检查发送中断标志位
- 394   2                TI = 0; 
+ 363   1      //  ACC |= S1_S1;               //(P1.6/RxD_3, P1.7/TxD_3)
+ 364   1      //  P_SW1 = ACC;
+ 365   1      
+ 366   1      
+ 367   1          AUXR = 0x40;                //定时器1为1T模式
+ 368   1          TMOD = 0x00;                //定时器1为模式0(16位自动重载)
+ 369   1          TL1 = (65536 - (FOSC/4/BAUD));   //设置波特率重装值
+ 370   1          TH1 = (65536 - (FOSC/4/BAUD))>>8;
+ 371   1          TR1 = 1;                    //定时器1开始启动
+ 372   1          ES = 1;                     //使能串口中断
+ 373   1          EA = 1;
+ 374   1      
+ 375   1      }
+ 376          
+ 377          /*----------------------------
+ 378          UART 中断服务程序
+ 379          -----------------------------*/
+ 380          void Uart() interrupt 4 using 1
+ 381          {
+ 382   1          if (RI)
+ 383   1          {
+ 384   2              while(!RI);
+ 385   2              RI=0;
+ 386   2              UART_R();
+ 387   2              busy = 0;
+ 388   2      
+ 389   2          }
+ 390   1          if (TI)
+ 391   1          {
+ 392   2              while(!TI);
+ 393   2              TI = 0;                 //清除TI位
+ 394   2              busy = 0;               //清忙标志
  395   2          }
  396   1      }
  397          
  398          
- 399          //初始化ESP8266WiFi模块，并连接到服务器
- 400          void ConnectServer() {
- 401   1      
- 402   1          DELAY_MS( 1000);
- 403   1      
- 404   1          UART_TC("+++\0"); // 退出透传模式
- 405   1          DELAY_MS( 1000);
- 406   1      
- 407   1      //    UART_TC("AT+RST\r\n\0");  // 复位
- 408   1      //    DELAY_MS(2000);
- 409   1          
- 410   1          UART_TC("AT+CWMODE=1\r\n\0"); // 这是设置STA模式
- 411   1          DELAY_MS( 2500);
- 412   1          
- 413   1          UART_TC("AT+CIPMUX=0\r\n\0");  // 设置单连接模式
- 414   1          DELAY_MS(1000);
- 415   1      
- 416   1          UART_TC("AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0");  // 这一步便是连接wifi，延时的时间要长一些，否则
-             -会等不到返回的信息。10s
- 417   1          DELAY_MS(15000);
- 418   1      
- 419   1      
- 420   1          UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");  // 连接到指定TCP服务器192.168.0.2
- 421   1          DELAY_MS( 5000);
- 422   1      
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 8   
+ 399          void UART_T (unsigned char UART_data) { //定义串口发送数据变量
+ 400   1          SBUF = UART_data; //将接收的数据发送回去
+ 401   1          while(!TI);   //检查发送中断标志位
+ 402   1          TI = 0;     //令发送中断标志位为0（软件清零）
+ 403   1      }
+ 404          
+ 405          
+ 406          void UART_TC (unsigned char *str) {
+ 407   1          while(*str != '\0') {
+ 408   2              UART_T(*str);
+ 409   2              *str++;
+*** WARNING C275 IN LINE 409 OF ..\CODE\SMARTCAR.C: expression with possibly no effect
+ 410   2          }
+ 411   1          *str = 0;
+ 412   1      }
+ 413          
+ 414          
+ 415          //串口  接收ESP8266的串口数据，并校验数据的完整性9位
+ 416          
+ 417          void UART_R()
+ 418          {
+ 419   1          TL0 = 0x00;   //设置定时初值
+ 420   1        TH0 = 0xDC;   //设置定时初值
+ 421   1        TF0 = 0;    //清除TF0标志
+ 422   1        TR0 = 1;    //定时器0开始计时
+ 423   1        ET0 = 1;  //允许中断
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 8   
 
- 423   1          UART_TC("AT+CIPMODE=1\r\n\0"); // 设置透传模式
- 424   1          DELAY_MS( 2000);
- 425   1      
- 426   1        // UART_TC("AT+SAVETRANSLINK=1,\"47.104.19.111\",4001,\"TCP\"\r\n\0"); // 保存TCP连接到flash，实现上电透
-             -传
- 427   1        // DELAY_MS(1000);
- 428   1      
- 429   1          UART_TC("AT+CIPSEND\r\n\0");   // 进入透传模式 准备模块与电脑进行互传数据
- 430   1          DELAY_MS( 1000);
- 431   1          
- 432   1          
- 433   1      
- 434   1      }
+ 424   1        
+ 425   1        
+ 426   1      
+ 427   1         DATA_GET[CURRENT_LENGTH]=SBUF;
+ 428   1         CURRENT_LENGTH++;
+ 429   1        
+ 430   1        
+ 431   1      
+ 432   1      }
+ 433          
+ 434          
  435          
- 436          void Timer4Init(void)   
- 437          {
- 438   1        //50 毫秒@11.0592MHz
- 439   1        T4T3M &= 0xDF;    //定时器时钟12T模式
- 440   1        T4L = 0x00;   //设置定时初值
- 441   1        T4H = 0x4C;   //设置定时初值
- 442   1        T4T3M |= 0x80;    //定时器4开始计时
- 443   1        
- 444   1        //5毫秒@11.0592MHz
- 445   1      //  T4T3M |= 0x20;    //定时器时钟1T模式
- 446   1      //  T4L = 0x00;   //设置定时初值
- 447   1      //  T4H = 0x28;   //设置定时初值
- 448   1      //  T4T3M |= 0x80;    //定时器4开始计时
- 449   1          IE2 |= 0x40;    //开定时器4中断
- 450   1          EA=1;   //总中断开启
- 451   1      }
- 452          
- 453          
- 454          //10s自动上报温湿度
- 455          void Timer4_interrupt() interrupt 20    //定时中断入口
- 456          {
- 457   1        
- 458   1        U8 xdata RES_DATA[]= { 0X23, 0X23,0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+ 436          void SendAckData(U8 len, unsigned char *RES_DATA) {
+ 437   1        
+ 438   1          unsigned int i=0;
+ 439   1          for(i=0; i<len; i++)
+ 440   1          {
+ 441   2               
+ 442   2              SBUF=RES_DATA[i];
+ 443   2              while(!TI);   //检查发送中断标志位
+ 444   2                TI = 0; 
+ 445   2          }
+ 446   1      }
+ 447          
+ 448          
+ 449          //初始化ESP8266WiFi模块，并连接到服务器
+ 450          void ConnectServer() {
+ 451   1      
+ 452   1          DELAY_MS( 1000);
+ 453   1      
+ 454   1          UART_TC("+++\0"); // 退出透传模式
+ 455   1          DELAY_MS( 1000);
+ 456   1      
+ 457   1      //    UART_TC("AT+RST\r\n\0");  // 复位
+ 458   1      //    DELAY_MS(2000);
+ 459   1          
+ 460   1          UART_TC("AT+CWMODE=1\r\n\0"); // 这是设置STA模式
+ 461   1          DELAY_MS( 2500);
+ 462   1          
+ 463   1          UART_TC("AT+CIPMUX=0\r\n\0");  // 设置单连接模式
+ 464   1          DELAY_MS(1000);
+ 465   1      
+ 466   1          UART_TC("AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0");  // 这一步便是连接wifi，延时的时间要长一些，否则
+             -会等不到返回的信息。10s
+ 467   1          DELAY_MS(15000);
+ 468   1      
+ 469   1      
+ 470   1          UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");  // 连接到指定TCP服务器192.168.0.2
+ 471   1          DELAY_MS( 5000);
+ 472   1      
+ 473   1          UART_TC("AT+CIPMODE=1\r\n\0"); // 设置透传模式
+ 474   1          DELAY_MS( 2000);
+ 475   1      
+ 476   1        // UART_TC("AT+SAVETRANSLINK=1,\"47.104.19.111\",4001,\"TCP\"\r\n\0"); // 保存TCP连接到flash，实现上电透
+             -传
+ 477   1        // DELAY_MS(1000);
+ 478   1      
+ 479   1          UART_TC("AT+CIPSEND\r\n\0");   // 进入透传模式 准备模块与电脑进行互传数据
+ 480   1          DELAY_MS( 1000);
+ 481   1          
+ 482   1          
+ 483   1      
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 9   
+
+ 484   1      }
+ 485          
+ 486          void Timer4Init(void)   
+ 487          {
+ 488   1        //50 毫秒@11.0592MHz
+ 489   1        T4T3M &= 0xDF;    //定时器时钟12T模式
+ 490   1        T4L = 0x00;   //设置定时初值
+ 491   1        T4H = 0x4C;   //设置定时初值
+ 492   1        T4T3M |= 0x80;    //定时器4开始计时
+ 493   1        
+ 494   1        //5毫秒@11.0592MHz
+ 495   1      //  T4T3M |= 0x20;    //定时器时钟1T模式
+ 496   1      //  T4L = 0x00;   //设置定时初值
+ 497   1      //  T4H = 0x28;   //设置定时初值
+ 498   1      //  T4T3M |= 0x80;    //定时器4开始计时
+ 499   1          IE2 |= 0x40;    //开定时器4中断
+ 500   1          EA=1;   //总中断开启
+ 501   1      }
+ 502          
+ 503          
+ 504          //10s自动上报信息
+ 505          void Timer4_interrupt() interrupt 20    //定时中断入口
+ 506          {
+ 507   1        
+ 508   1        U8 xdata RES_DATA[]= { 0X23, 0X23,0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
              - 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0X23, 0X24,
              - 0X02, 0X02, 0xB0};
- 459   1      unsigned char RES_LEN= 37;
- 460   1      
- 461   1          if(Timer4_Count>=200){
- 462   2            
- 463   2            unsigned char  light_status = LED ? 0x02 : 0x01;
- 464   2            unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
- 465   2            unsigned char j = 5;
- 466   2                Timer4_Count = 1;
- 467   2      
- 468   2            for(j=5;j<=22;j++){
- 469   3              RES_DATA[j] = SRCCID[j-5];
- 470   3            }   
- 471   2      
- 472   2      //      if(DATA_Temphui[2]==1)
- 473   2      //      {
- 474   2      //          DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
- 475   2      //      }
- 476   2      
- 477   2            RES_DATA[32] = DATA_Temphui[0];
- 478   2            RES_DATA[33] =  DATA_Temphui[1];
- 479   2            RES_DATA[34] = light_status;
- 480   2            RES_DATA[35] = buzzy_status,
- 481   2            RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 9   
+ 509   1      unsigned char RES_LEN= 37;
+ 510   1      
+ 511   1          if(Timer4_Count>=200){
+ 512   2            
+ 513   2            unsigned char  light_status = LED ? 0x02 : 0x01;
+ 514   2            unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
+ 515   2            unsigned char j = 5;
+ 516   2                Timer4_Count = 1;
+ 517   2      
+ 518   2            for(j=5;j<=22;j++){
+ 519   3              RES_DATA[j] = SRCCID[j-5];
+ 520   3            }   
+ 521   2      
+ 522   2      //      if(DATA_Temphui[2]==1)
+ 523   2      //      {
+ 524   2      //          DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
+ 525   2      //      }
+ 526   2      
+ 527   2            RES_DATA[32] = DATA_Temphui[0];
+ 528   2            RES_DATA[33] =  DATA_Temphui[1];
+ 529   2            RES_DATA[34] = light_status;
+ 530   2            RES_DATA[35] = buzzy_status,
+ 531   2            RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
+ 532   2                
+ 533   2            SendAckData(RES_LEN,RES_DATA);
+ 534   2            
+ 535   2          }else{
+ 536   2            
+ 537   2              Timer4_Count++;
+ 538   2          }
+ 539   1          
+ 540   1      }
+ 541          
+ 542          
+ 543          
+C51 COMPILER V8.02   SMARTCAR                                                              06/07/2020 13:17:14 PAGE 10  
 
- 482   2                
- 483   2            SendAckData(RES_LEN,RES_DATA);
- 484   2            
- 485   2          }else{
- 486   2            
- 487   2              Timer4_Count++;
- 488   2          }
- 489   1          
- 490   1      }
- 491          
- 492          
- 493          
- 494          
- 495          
- 496          void Timer0Init(void)   //10毫秒@11.0592MHz
- 497          {
- 498   1        AUXR &= 0x7F;   //定时器时钟12T模式
- 499   1        TMOD &= 0xF0;   //设置定时器模式
- 500   1        TMOD |= 0x01;   //设置定时器模式
- 501   1        TL0 = 0x00;   //设置定时初值
- 502   1        TH0 = 0xB8;   //设置定时初值
- 503   1        TF0 = 0;    //清除TF0标志
- 504   1        TR0 = 1;    //定时器0开始计时
- 505   1        ET0 = 1;  //允许中断
- 506   1      }
- 507          
- 508          
- 509          
- 510          /********************* Timer0中断函数************************/
- 511          void timer0_int (void) interrupt 1
- 512          {
- 513   1        TL0 = 0x00;   //设置定时初值
- 514   1        TH0 = 0xB8;   //设置定时初值
- 515   1        TF0 = 0;    //清除TF0标志
- 516   1        TR0 = 0;    //定时器0开始计时
- 517   1        ET0 = 0;  //允许中断
- 518   1        
- 519   1        ResponseData(CURRENT_LENGTH,DATA_GET);    
- 520   1        CURRENT_LENGTH = 0;
- 521   1            
- 522   1      }
- 523          
- 524          
- 525          void Led_Actions_Status(unsigned char status){
- 526   1      
- 527   1        if(status){
- 528   2          LED = 0;
- 529   2        }else{
- 530   2          LED = 1;
- 531   2        }
- 532   1      
- 533   1      }
- 534          
- 535          void Buzzer_Actions_Status(unsigned char status){
- 536   1      
- 537   1        if(status){
- 538   2          Buzzer = 0;
- 539   2        }else{
- 540   2          Buzzer = 1;
- 541   2        }
- 542   1      
- 543   1      }
-C51 COMPILER V8.02   SMARTCAR                                                              06/06/2020 17:05:18 PAGE 10  
-
+ 544          
+ 545          
+ 546          void Timer0Init(void)   //10毫秒@11.0592MHz
+ 547          {
+ 548   1        AUXR &= 0x7F;   //定时器时钟12T模式
+ 549   1        TMOD &= 0xF0;   //设置定时器模式
+ 550   1        TMOD |= 0x01;   //设置定时器模式
+ 551   1        TL0 = 0x00;   //设置定时初值
+ 552   1        TH0 = 0xB8;   //设置定时初值
+ 553   1        TF0 = 0;    //清除TF0标志
+ 554   1        TR0 = 1;    //定时器0开始计时
+ 555   1        ET0 = 1;  //允许中断
+ 556   1      }
+ 557          
+ 558          
+ 559          
+ 560          /********************* Timer0中断函数************************/
+ 561          void timer0_int (void) interrupt 1
+ 562          {
+ 563   1        TL0 = 0x00;   //设置定时初值
+ 564   1        TH0 = 0xB8;   //设置定时初值
+ 565   1        TF0 = 0;    //清除TF0标志
+ 566   1        TR0 = 0;    //定时器0开始计时
+ 567   1        ET0 = 0;  //允许中断
+ 568   1        
+ 569   1        ResponseData(CURRENT_LENGTH,DATA_GET);    
+ 570   1        CURRENT_LENGTH = 0;
+ 571   1            
+ 572   1      }
+ 573          
+ 574          
+ 575          void Led_Actions_Status(unsigned char status){
+ 576   1      
+ 577   1        if(status){
+ 578   2          LED = 0;
+ 579   2        }else{
+ 580   2          LED = 1;
+ 581   2        }
+ 582   1      
+ 583   1      }
+ 584          
+ 585          void Buzzer_Actions_Status(unsigned char status){
+ 586   1      
+ 587   1        if(status){
+ 588   2          Buzzer = 0;
+ 589   2        }else{
+ 590   2          Buzzer = 1;
+ 591   2        }
+ 592   1      
+ 593   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1494    ----
+   CODE SIZE        =   1749    ----
    CONSTANT SIZE    =    222    ----
    XDATA SIZE       =    518      80
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =      4      24
+   DATA SIZE        =      4      25
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      1    ----
 END OF MODULE INFORMATION.

@@ -172,33 +172,53 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 			 
 		 }else if(dataCmdFlag ==0x8006){//远程控制
 
-			 if(RES_DATA[31] == 0x02){//基础数据查询
+			 if(RES_DATA[31] == 0x02){//基础数据查询	温度、湿度、灯、喇叭；请见【信息体定义】
 					unsigned char  light_status = LED ? 0x02 : 0x01;
 					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-					unsigned char xdata ds[37] = {0X23, 0X23, 0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+					unsigned char xdata ds[37] = {0};//{0X23, 0X23, 0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
 					unsigned char dslen =37;
+			  	unsigned char j=0;
 				
-					ds[2] = 0X10;
-					ds[3] = 0X02;
+				  ds[0] = 0X23;//数据头
+					ds[1] = 0X23;
+					ds[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
+					ds[3] = 0X06;
 					
-					if(dataCmdAck == 0xFE){
+					if(dataCmdAck == 0xFE){//应答标识
 						ds[4] = 0x01;//成功
 						
 					}
-							
-					ds[32] = DATA_Temphui[0];
+			
+				 for(j=0;j<17;j++){//CID赋值
+						ds[j+5] = SRCCID[j];
+				 }
+				ds[22] = 0X01;//不加密
+				ds[23] = 0X00;//长度两位 高位00
+				ds[24] = 0X0B;//低位0B 一共11位
+
+				ds[25] = 0X14;//年 0x14+2000 = 2020 
+				ds[26] = 0X05;//月 
+				ds[27] = 0X18;//日 
+				ds[28] = 0X15;//时 
+				ds[29] = 0X24;//分
+				ds[30] = 0X08;//秒
+				
+				ds[31] = 0X02;//基础查询   编码
+
+
+					ds[32] = DATA_Temphui[0]; //基础数据4个字节的数据
 					ds[33] = DATA_Temphui[1];
 					ds[34] = light_status;
 					ds[35] = buzzy_status;
 					
 			
 					
-				 ds[dslen-1] = CheckBCC(dslen, ds);
+				 ds[dslen-1] = CheckBCC(dslen, ds);//计算校验和  放最后一位
 						SendAckData(dslen,ds);
 
 				 
 				 
-			 }else if(RES_DATA[31] == 0x03){//基础控制
+			 }else if(RES_DATA[31] == 0x03){//基础控制	灯、喇叭；请见【信息体定义】
 				 			 
 					 unsigned char light = RES_DATA[32];
 					 unsigned char buzzy = RES_DATA[33];
@@ -215,14 +235,44 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 							Buzzer_Actions_Status(1);
 					 }
 					 
+					 
+					 
+					 
+					RES_DATA[0] = 0X23;
+					RES_DATA[1] = 0X23;
 					RES_DATA[2] = 0X10;
-					RES_DATA[3] = 0X02;
+					RES_DATA[3] = 0X06;
 
 					if(dataCmdAck == 0xFE){
 						RES_DATA[4] = 0x01;//成功
 					
 					}
-						RES_DATA[len-1] = CheckBCC(len, RES_DATA);
+					if(dataCmdAck == 0xFE){//应答标识
+						RES_DATA[4] = 0x01;//成功
+						
+					}
+			
+				 for(j=0;j<17;j++){//CID赋值
+						RES_DATA[j+5] = SRCCID[j];
+				 }
+				RES_DATA[22] = 0X01;//不加密
+				RES_DATA[23] = 0X00;//长度两位 高位00
+				RES_DATA[24] = 0X09;//低位09 一共9位    6位的时间+1位的命令标识 + 2位的数据
+
+				RES_DATA[25] = 0X14;//年 0x14+2000 = 2020 
+				RES_DATA[26] = 0X05;//月 
+				RES_DATA[27] = 0X18;//日 
+				RES_DATA[28] = 0X15;//时 
+				RES_DATA[29] = 0X24;//分
+				RES_DATA[30] = 0X08;//秒
+				
+				RES_DATA[31] = 0X03;//基础控制  灯、喇叭；请见【信息体定义】
+				
+//				RES_DATA[32] = RES_DATA[32];// 这两位不用改动  
+//				RES_DATA[33] = RES_DATA[33];
+				
+				
+						RES_DATA[len-1] = CheckBCC(len, RES_DATA);//这一帧数据 35个字节 len=35
 						SendAckData(len,RES_DATA);
 
 			 
@@ -451,7 +501,7 @@ void Timer4Init(void)
 }
 
 
-//10s自动上报温湿度
+//10s自动上报信息
 void Timer4_interrupt() interrupt 20    //定时中断入口
 {
 	
