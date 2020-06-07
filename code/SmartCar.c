@@ -31,8 +31,8 @@ typedef long I32;
 typedef unsigned char U8; 
 
 U8 SRCHeader = 0x23;
-U8 xdata SRCCID[] = {"SRC00000000000003"};
-
+U8 xdata SRCCID[] = {"SRC00000000000004"};
+U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";
 U8 xdata DATA_GET[500]={0};//缓冲区长度
 
 U8 CURRENT_LENGTH=0;
@@ -175,7 +175,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 			 if(RES_DATA[31] == 0x02){//基础数据查询	温度、湿度、灯、喇叭；请见【信息体定义】
 					unsigned char  light_status = LED ? 0x02 : 0x01;
 					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-					unsigned char xdata ds[37] = {0};//{0X23, 0X23, 0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+					unsigned char xdata ds[37] = {0};
 					unsigned char dslen =37;
 			  	unsigned char j=0;
 				
@@ -463,7 +463,7 @@ void ConnectServer() {
     UART_TC("AT+CIPMUX=0\r\n\0");  // 设置单连接模式
     DELAY_MS(1000);
 
-    UART_TC("AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0");  // 这一步便是连接wifi，延时的时间要长一些，否则会等不到返回的信息。10s
+    UART_TC(netConfig);  // 这一步便是连接wifi，延时的时间要长一些，否则会等不到返回的信息。10s
     DELAY_MS(15000);
 
 
@@ -491,33 +491,47 @@ void Timer4Init(void)
 	T4H = 0x4C;		//设置定时初值
 	T4T3M |= 0x80;		//定时器4开始计时
 	
-	//5毫秒@11.0592MHz
-//	T4T3M |= 0x20;		//定时器时钟1T模式
-//	T4L = 0x00;		//设置定时初值
-//	T4H = 0x28;		//设置定时初值
-//	T4T3M |= 0x80;		//定时器4开始计时
 		IE2 |= 0x40;		//开定时器4中断
 		EA=1; 	//总中断开启
 }
 
 
-//10s自动上报信息
+//10s中断自动上报信息
 void Timer4_interrupt() interrupt 20    //定时中断入口
 {
 	
-	U8 xdata RES_DATA[]= { 0X23, 0X23,0X10, 0X02, 0XFE, 0x53, 0x52, 0x43, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x33, 0x01, 0x00, 0x0B, 0x14, 0x05, 0x18, 0x15, 0x24, 0x38, 0x02, 0X23, 0X24, 0X02, 0X02, 0xB0};
-unsigned char RES_LEN= 37;
 
-		if(Timer4_Count>=200){
-			
-			unsigned char  light_status = LED ? 0x02 : 0x01;
-			unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-		  unsigned char j = 5;
+		if(Timer4_Count>=200){  //200 * 50ms = 10s
+			  	unsigned char j=0;
+					U8 xdata RES_DATA[37]= {0};
+          unsigned char RES_LEN= 37;
+					unsigned char  light_status = LED ? 0x02 : 0x01;
+					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
 					Timer4_Count = 1;
 
-			for(j=5;j<=22;j++){
-				RES_DATA[j] = SRCCID[j-5];
-			}		
+				  RES_DATA[0] = 0X23;//数据头
+					RES_DATA[1] = 0X23;
+					RES_DATA[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
+					RES_DATA[3] = 0X06;
+					RES_DATA[4] = 0xFE;//应答标识
+						
+				 for(j=0;j<17;j++){//CID赋值
+						RES_DATA[j+5] = SRCCID[j];
+				 }
+				 
+				RES_DATA[22] = 0X01;//不加密
+				RES_DATA[23] = 0X00;//长度两位 高位00
+				RES_DATA[24] = 0X0B;//低位0B 一共11位
+
+				RES_DATA[25] = 0X14;//年 0x14+2000 = 2020 
+				RES_DATA[26] = 0X05;//月 
+				RES_DATA[27] = 0X18;//日 
+				RES_DATA[28] = 0X15;//时 
+				RES_DATA[29] = 0X24;//分
+				RES_DATA[30] = 0X08;//秒
+				
+				RES_DATA[31] = 0X02;//基础数据上报
+
 
 //			if(DATA_Temphui[2]==1)
 //			{
