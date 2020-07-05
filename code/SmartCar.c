@@ -38,6 +38,7 @@ U8 xdata DATA_GET[500]={0};//缓冲区长度
 U8 CURRENT_LENGTH=0;
 
 static	 unsigned int   Timer4_Count=1;
+static	 unsigned int   Timeout_Count=0;
 
 
 
@@ -83,6 +84,7 @@ void main(){
     P6M1 = 0x00;
     P7M0 = 0x00;
     P7M1 = 0x00;
+		
 
     Device_Init();
 
@@ -95,15 +97,15 @@ void main(){
 		Timer4Init();
 		Timer0Init();
 
-	  WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
+	 // WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
                             //设置看门狗定时器分频数为32,溢出时间如下:
                             //11.0592M : 1.14s
                             //18.432M  : 0.68s
                             //20M      : 0.63s
-    WDT_CONTR |= 0x20;      //启动看门狗
+    //WDT_CONTR |= 0x20;      //启动看门狗
 
     while(1) {
-			WDT_CONTR |= 0x10;  //喂狗程序
+		//	WDT_CONTR |= 0x10;  //喂狗程序
 			
 			if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
 			{
@@ -154,6 +156,8 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 		 if ((26 + dataUintLength) != len) {
 				return ;
 		 }
+		 
+		 Timeout_Count = 0;
 		 
 		 //保存时间
 		 for(j=0;j<6;j++){
@@ -473,8 +477,8 @@ void ConnectServer() {
     UART_TC("AT+CIPMODE=1\r\n\0"); // 设置透传模式
     DELAY_MS( 2000);
 
-  // UART_TC("AT+SAVETRANSLINK=1,\"47.104.19.111\",4001,\"TCP\"\r\n\0"); // 保存TCP连接到flash，实现上电透传
-  // DELAY_MS(1000);
+   UART_TC("AT+SAVETRANSLINK=1,\"47.104.19.111\",4001,\"TCP\"\r\n\0"); // 保存TCP连接到flash，实现上电透传
+   DELAY_MS(1000);
 
     UART_TC("AT+CIPSEND\r\n\0");	 // 进入透传模式 准备模块与电脑进行互传数据
     DELAY_MS( 1000);
@@ -545,6 +549,13 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 			RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
 					
 			SendAckData(RES_LEN,RES_DATA);
+			
+			Timeout_Count++;//每加一次加10s
+			
+			if(Timeout_Count >= 6){//1min 重启机器
+				Timeout_Count = 0;
+				IAP_CONTR = 0X20;
+			}
 			
 		}else{
 			
