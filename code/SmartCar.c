@@ -90,22 +90,22 @@ void main(){
 
     USART_Init();
 
-		ConnectServer();
+		//ConnectServer();
 
 		ConnectSuccess();
 		
 		Timer4Init();
 		Timer0Init();
 
-	 // WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
+	  WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
                             //设置看门狗定时器分频数为32,溢出时间如下:
                             //11.0592M : 1.14s
                             //18.432M  : 0.68s
                             //20M      : 0.63s
-    //WDT_CONTR |= 0x20;      //启动看门狗
+    WDT_CONTR |= 0x20;      //启动看门狗
 
     while(1) {
-		//	WDT_CONTR |= 0x10;  //喂狗程序
+			WDT_CONTR |= 0x10;  //喂狗程序
 			
 			if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
 			{
@@ -552,7 +552,7 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 			
 			Timeout_Count++;//每加一次加10s
 			
-			if(Timeout_Count >= 6){//1min 重启机器
+			if(Timeout_Count >= 3){//1min 重启机器
 				Timeout_Count = 0;
 				IAP_CONTR = 0X20;
 			}

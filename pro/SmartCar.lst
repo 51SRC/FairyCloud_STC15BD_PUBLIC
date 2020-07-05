@@ -1,4 +1,4 @@
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 1   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 1   
 
 
 C51 COMPILER V8.02, COMPILATION OF MODULE SMARTCAR
@@ -62,7 +62,7 @@ line level    source
   52          void DELAY_MS(unsigned int timeout);    //@11.0592MHz   1ms
   53          void DELAY_1MS() ;
   54          void UART_TC (unsigned char *str);
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 2   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 2   
 
   55          void UART_T (unsigned char UART_data); //定义串口发送数据变量
   56          void UART_R();//接受数据
@@ -102,22 +102,22 @@ line level    source
   90   1      
   91   1          USART_Init();
   92   1      
-  93   1          ConnectServer();
+  93   1          //ConnectServer();
   94   1      
   95   1          ConnectSuccess();
   96   1          
   97   1          Timer4Init();
   98   1          Timer0Init();
   99   1      
- 100   1         // WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
+ 100   1          WDT_CONTR = 0x06;       //看门狗定时器溢出时间计算公式: (12 * 32768 * PS) / FOSC (秒)
  101   1                                  //设置看门狗定时器分频数为32,溢出时间如下:
  102   1                                  //11.0592M : 1.14s
  103   1                                  //18.432M  : 0.68s
  104   1                                  //20M      : 0.63s
- 105   1          //WDT_CONTR |= 0x20;      //启动看门狗
+ 105   1          WDT_CONTR |= 0x20;      //启动看门狗
  106   1      
  107   1          while(1) {
- 108   2          //  WDT_CONTR |= 0x10;  //喂狗程序
+ 108   2            WDT_CONTR |= 0x10;  //喂狗程序
  109   2            
  110   2            if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
  111   2            {
@@ -126,7 +126,7 @@ line level    source
  114   3            }
  115   2          
  116   2      
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 3   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 3   
 
  117   2          };
  118   1      }
@@ -190,7 +190,7 @@ line level    source
  176   3             
  177   3           }else if(dataCmdFlag ==0x8006){//远程控制
  178   3      
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 4   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 4   
 
  179   3             if(RES_DATA[31] == 0x02){//基础数据查询  温度、湿度、灯、喇叭；请见【信息体定义】
  180   4                unsigned char  light_status = LED ? 0x02 : 0x01;
@@ -254,7 +254,7 @@ line level    source
  238   5                 }else if( buzzy==0x01){
  239   5                    Buzzer_Actions_Status(1);
  240   5                 }
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 5   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 5   
 
  241   4                 
  242   4                 
@@ -318,7 +318,7 @@ line level    source
  300   1      
  301   1          _nop_();
  302   1          _nop_();
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 6   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 6   
 
  303   1          _nop_();
  304   1          i = 11;
@@ -382,7 +382,7 @@ line level    source
  362   1          SCON = 0x50;                //8位可变波特率
  363   1          PS = 1;
  364   1          
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 7   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 7   
 
  365   1      //  ACC = P_SW1;
  366   1      //  ACC &= ~(S1_S0 | S1_S1);    //S1_S0=0 S1_S1=1
@@ -446,7 +446,7 @@ line level    source
  423   1          TL0 = 0x00;   //设置定时初值
  424   1        TH0 = 0xDC;   //设置定时初值
  425   1        TF0 = 0;    //清除TF0标志
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 8   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 8   
 
  426   1        TR0 = 1;    //定时器0开始计时
  427   1        ET0 = 1;  //允许中断
@@ -510,7 +510,7 @@ line level    source
  485   1          
  486   1          
  487   1      
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 9   
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 9   
 
  488   1      }
  489          
@@ -574,14 +574,14 @@ line level    source
  547   2            RES_DATA[34] = light_status;
  548   2            RES_DATA[35] = buzzy_status,
  549   2            RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 10  
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 10  
 
  550   2                
  551   2            SendAckData(RES_LEN,RES_DATA);
  552   2            
  553   2            Timeout_Count++;//每加一次加10s
  554   2            
- 555   2            if(Timeout_Count >= 6){//1min 重启机器
+ 555   2            if(Timeout_Count >= 3){//1min 重启机器
  556   3              Timeout_Count = 0;
  557   3              IAP_CONTR = 0X20;
  558   3            }
@@ -638,7 +638,7 @@ line level    source
  609          
  610          void Buzzer_Actions_Status(unsigned char status){
  611   1      
-C51 COMPILER V8.02   SMARTCAR                                                              06/21/2020 16:03:53 PAGE 11  
+C51 COMPILER V8.02   SMARTCAR                                                              07/05/2020 19:53:43 PAGE 11  
 
  612   1        if(status){
  613   2          Buzzer = 0;
@@ -650,7 +650,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1840    ----
+   CODE SIZE        =   1846    ----
    CONSTANT SIZE    =    236    ----
    XDATA SIZE       =    553      80
    PDATA SIZE       =   ----    ----
