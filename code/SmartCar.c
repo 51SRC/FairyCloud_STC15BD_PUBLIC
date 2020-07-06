@@ -55,6 +55,7 @@ void UART_TC (unsigned char *str);
 void UART_T (unsigned char UART_data); //定义串口发送数据变量
 void UART_R();//接受数据
 void ConnectServer();//连接服务器
+void ReConnectServer();//重启WIFI连接服务器
 void USART_Init();
 void Device_Init();
 void SendAckData(U8 len, unsigned char *RES_DATA);
@@ -334,16 +335,16 @@ void Device_Init() {
 void ConnectSuccess(){
 
 	 LED = 1;
-	 Buzzer = 1;
+	// Buzzer = 1;
 	 DELAY_MS(200);
 		LED = 0;
-		Buzzer = 0;
+	//	Buzzer = 0;
 	 DELAY_MS(200);
 	  LED = 1;
-	  Buzzer = 1;
+	//  Buzzer = 1;
 	 DELAY_MS(200);
 	  LED = 0;
-	  Buzzer = 0;
+	//  Buzzer = 0;
 
 }
 
@@ -449,6 +450,14 @@ void SendAckData(U8 len, unsigned char *RES_DATA) {
 		}
 }
 
+//重启 ESP8266WiFi模块
+void ReConnectServer() {
+
+    UART_TC("+++\0"); // 退出透传模式
+		 DELAY_MS( 500);
+    UART_TC("AT+RST\r\n\0");  // 复位
+		
+}
 
 //初始化ESP8266WiFi模块，并连接到服务器
 void ConnectServer() {
@@ -554,6 +563,7 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 			
 			if(Timeout_Count >= 3){//1min 重启机器
 				Timeout_Count = 0;
+				ReConnectServer();
 				IAP_CONTR = 0X20;
 			}
 			
