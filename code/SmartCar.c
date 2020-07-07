@@ -454,7 +454,7 @@ void SendAckData(U8 len, unsigned char *RES_DATA) {
 void ReConnectServer() {
 
     UART_TC("+++\0"); // 退出透传模式
-		 DELAY_MS( 500);
+		 DELAY_MS( 1000);
     UART_TC("AT+RST\r\n\0");  // 复位
 		
 }
@@ -557,15 +557,21 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 			RES_DATA[35] = buzzy_status,
 			RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
 					
-			SendAckData(RES_LEN,RES_DATA);
+		  Timeout_Count++;//每加一次加10s
 			
-			Timeout_Count++;//每加一次加10s
+			if(Timeout_Count < 3){
+				SendAckData(RES_LEN,RES_DATA);
+		}else if(Timeout_Count == 3){//1min 重启机器
+				UART_TC("+++\0"); // 退出透传模式
+        
+				//ReConnectServer();
 			
-			if(Timeout_Count >= 3){//1min 重启机器
-				Timeout_Count = 0;
-				ReConnectServer();
-				IAP_CONTR = 0X20;
-			}
+			}else 	if(Timeout_Count > 3){
+						Timeout_Count = 0;
+					  UART_TC("AT+RST\r\n\0");  // 复位
+					//	IAP_CONTR = 0X20;
+				}
+				
 			
 		}else{
 			
