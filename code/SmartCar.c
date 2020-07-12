@@ -87,11 +87,16 @@ void main(){
     P7M1 = 0x00;
 		
 
-    Device_Init();
+    Device_Init();//初始化硬件
 
-    USART_Init();
+    USART_Init();//初始化与WiFi通信的串口
+		
+		if(PCON&0x10){	//如果是硬启动(上电启动)的话，就进行WiFi的第一次初始化操作，若是热启动（复位启动或看门狗启动）的话直接跳过；因为WiFi在第一次初始化的时候，就进行了“ 保存TCP连接到flash，实现上电透传”
+			PCON&=0xef;
+			ConnectServer();
+		}
 
-		//ConnectServer();
+		
 
 		ConnectSuccess();
 		
@@ -103,7 +108,7 @@ void main(){
                             //11.0592M : 1.14s
                             //18.432M  : 0.68s
                             //20M      : 0.63s
-    WDT_CONTR |= 0x20;      //启动看门狗
+    WDT_CONTR |= 0x20;      //启动看门狗  STC单片机的看门狗一旦启动后，就没法关闭
 
     while(1) {
 			WDT_CONTR |= 0x10;  //喂狗程序
@@ -158,7 +163,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 				return ;
 		 }
 		 
-		 Timeout_Count = 0;
+		 Timeout_Count = 0;//将本地的30s重连计数清零
 		 
 		 //保存时间
 		 for(j=0;j<6;j++){
@@ -466,9 +471,6 @@ void ConnectServer() {
 
     UART_TC("+++\0"); // 退出透传模式
     DELAY_MS( 1000);
-
-//    UART_TC("AT+RST\r\n\0");  // 复位
-//    DELAY_MS(2000);
 		
 		UART_TC("AT+CWMODE=1\r\n\0"); // 这是设置STA模式
     DELAY_MS( 2500);
@@ -561,16 +563,17 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 			
 			if(Timeout_Count < 3){
 				SendAckData(RES_LEN,RES_DATA);
-		}else if(Timeout_Count == 3){//1min 重启机器
-				UART_TC("+++\0"); // 退出透传模式
+		}else if(Timeout_Count >= 3){//1min 重启机器
+				//UART_TC("+++\0"); // 退出透传模式
         
-				//ReConnectServer();
+				ReConnectServer();
+				Timeout_Count = 0;
 			
-			}else 	if(Timeout_Count > 3){
-						Timeout_Count = 0;
-					  UART_TC("AT+RST\r\n\0");  // 复位
-					//	IAP_CONTR = 0X20;
-				}
+			}//else 	if(Timeout_Count > 3){
+//						Timeout_Count = 0;
+//					  UART_TC("AT+RST\r\n\0");  // 复位
+//					//	IAP_CONTR = 0X20;
+//				}
 				
 			
 		}else{
