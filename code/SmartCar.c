@@ -16,9 +16,11 @@
 
 #include "STC15W4K58S4.h"
 #include "DHT11.h"
-
 #include "intrins.h"
 #include <string.h>  // 字符串处理头文件
+
+#include "codetab.h"
+#include "LQ12864.h"
 
 sbit LED = P3 ^ 2;  // LED
 sbit Buzzer = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
@@ -40,7 +42,7 @@ U8 CURRENT_LENGTH=0;
 static	 unsigned int   Timer4_Count=1;
 static	 unsigned int   Timeout_Count=0;
 
-
+static unsigned char i;
 
 #define FOSC 11059200L          //系统频率
 #define BAUD 115200             //串口波特率
@@ -66,6 +68,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA);
 void Buzzer_Actions_Status(unsigned char status);
 void Led_Actions_Status(unsigned char status);
 void Timer0Init(void);
+void LEDFunc(void);
 
 
 void main(){
@@ -86,8 +89,13 @@ void main(){
     P7M0 = 0x00;
     P7M1 = 0x00;
 		
+		Device_Init();//初始化硬件
 
-    Device_Init();//初始化硬件
+
+	  OLED_Init(); //OLED初始化
+		
+		LEDFunc();
+
 
     USART_Init();//初始化与WiFi通信的串口
 		
@@ -122,6 +130,40 @@ void main(){
 
     };
 }
+
+void LEDFunc(void)	{
+//		OLED_Fill(0xff); //屏全亮
+//		DELAY_MS(2000);
+//		OLED_Fill(0x00); //屏全灭
+//		DELAY_MS(200);
+		OLED_P16x16Ch(24,0,1);
+		OLED_P16x16Ch(40,0,2);
+		OLED_P16x16Ch(57,0,3);
+		OLED_P16x16Ch(74,0,4);
+		OLED_P16x16Ch(91,0,5);
+		for(i=0; i<8; i++)//通过点整显示汉字 -- i表示字表数组的位置
+		{
+//			OLED_P16x16Ch(i*16,0,i);
+		 	OLED_P16x16Ch(i*16,2,i+8);
+		 	OLED_P16x16Ch(i*16,4,i+16);
+		 	OLED_P16x16Ch(i*16,6,i+24);
+		}
+		DELAY_MS(4000);
+		OLED_CLS();//清屏
+
+		OLED_P8x16Str(0,0,"HelTec");//第一行 -- 8x16的显示单元显示ASCII码
+		OLED_P8x16Str(0,2,"OLED Display");
+		OLED_P8x16Str(0,4,"www.heltec.cn");
+		OLED_P6x8Str(0,6,"cn.heltec@gmail.com");
+		OLED_P6x8Str(0,7,"heltec.taobao.com");
+		DELAY_MS(4000);
+		OLED_CLS();
+
+		Draw_BMP(0,0,128,8,BMP1);  //图片显示(图片显示慎用，生成的字表较大，会占用较多空间，FLASH空间8K以下慎用)
+		DELAY_MS(8000);
+		Draw_BMP(0,0,128,8,BMP2);
+		DELAY_MS(8000);
+	}
 
 unsigned char CheckBCC(unsigned char len, unsigned char *recv){
 	  unsigned char bcc = 0x00;
