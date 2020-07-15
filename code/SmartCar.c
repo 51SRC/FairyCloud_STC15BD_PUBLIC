@@ -37,6 +37,7 @@ U8 xdata SRCCID[] = {"SRC00000000000001"};
 U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";
 U8 xdata DATA_GET[500]={0};//缓冲区长度
 
+
 U8 CURRENT_LENGTH=0;
 
 static	 unsigned int   Timer4_Count=1;
@@ -68,7 +69,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA);
 void Buzzer_Actions_Status(unsigned char status);
 void Led_Actions_Status(unsigned char status);
 void Timer0Init(void);
-void LEDFunc(void);
+void LEDFunc(unsigned char TEMP,unsigned char HUMI)	;
 
 
 void main(){
@@ -94,7 +95,7 @@ void main(){
 
 	  OLED_Init(); //OLED初始化
 		
-		LEDFunc();
+		LEDFunc(12,23);
 
 
     USART_Init();//初始化与WiFi通信的串口
@@ -124,14 +125,19 @@ void main(){
 			if(DHT11_Read_Data(&DATA_Temphui[0],&DATA_Temphui[1])==0)//温湿度检测
 			{
 				
-				 DATA_Temphui[2]=1;	 
+				  DATA_Temphui[2]=1;	 
+					LEDFunc(DATA_Temphui[0],DATA_Temphui[1]);
+
 			}
 		
 
     };
 }
 
-void LEDFunc(void)	{
+void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
+	unsigned char a[2],b[2]; 
+	
+	
 //		OLED_Fill(0xff); //屏全亮
 //		DELAY_MS(2000);
 //		OLED_Fill(0x00); //屏全灭
@@ -149,20 +155,42 @@ void LEDFunc(void)	{
 			OLED_P16x16Ch(i*16,0,i);
 		 	OLED_P16x16Ch(i*16,2,i+8);
 		 	OLED_P16x16Ch(i*16,4,i+16);
-		 	OLED_P16x16Ch(i*16,6,i+24);
+		// 	OLED_P16x16Ch(i*16,6,i+24);
+
 		}
+		
+		
+			OLED_P6x8Str(0,6,"2020.07.15 21:10");
+			OLED_P6x8Str(0,7,"status: success");//success close restart
+
+	
+			b[1] = '0'+HUMI%10;
+			b[0] = '0'+HUMI/10%10;  
+			
+			a[1] = '0'+TEMP%10;
+			a[0] = '0'+TEMP/10%10;
+		
+	  OLED_P8x16Str(42,2,&a[0]);
+	  OLED_P8x16Str(52,2,&a[1]);		
+		OLED_P8x16Str(42,4,&b[0]);
+	  OLED_P8x16Str(52,4,&b[1]);
+	
+
+
+	
+			
 		DELAY_MS(8000);
 
 
 
 		
-		for(i=0; i<8; i++)//通过点整显示汉字 -- i表示字表数组的位置
-		{
-			OLED_P16x16Ch(i*16,0,i);
-		 	OLED_P16x16Ch(i*16,2,i+8);
-		 	OLED_P16x16Ch(i*16,4,i+16);
-		 	OLED_P16x16Ch(i*16,6,i+24);
-		}
+//		for(i=0; i<8; i++)//通过点整显示汉字 -- i表示字表数组的位置
+//		{
+//			OLED_P16x16Ch(i*16,0,i);
+//		 	OLED_P16x16Ch(i*16,2,i+8);
+//		 	OLED_P16x16Ch(i*16,4,i+16);
+//		 	OLED_P16x16Ch(i*16,6,i+24);
+//		}
 	//	DELAY_MS(4000);
 //		OLED_CLS();//清屏
 
