@@ -33,7 +33,7 @@ typedef long I32;
 typedef unsigned char U8; 
 
 U8 SRCHeader = 0x23;
-U8 xdata SRCCID[] = {"SRC00000000000001"};
+U8 xdata SRCCID[] = {"SRC00000000000003"};
 U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";
 U8 xdata DATA_GET[500]={0};//缓冲区长度
 
@@ -95,7 +95,7 @@ void main(){
 
 	  OLED_Init(); //OLED初始化
 		
-		LEDFunc(12,23);
+		LEDFunc(0,0);
 
 
     USART_Init();//初始化与WiFi通信的串口
@@ -135,7 +135,7 @@ void main(){
 }
 
 void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
-	unsigned char a[2],b[2]; 
+	unsigned char a1,a2,b1,b2; 
 	
 	
 //		OLED_Fill(0xff); //屏全亮
@@ -161,25 +161,40 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		
 		
 			OLED_P6x8Str(0,6,"2020.07.15 21:10");
-			OLED_P6x8Str(0,7,"status: success");//success close restart
+			OLED_P6x8Str(0,7,"status: success");//success close restart start
 
 	
-			b[1] = '0'+HUMI%10;
-			b[0] = '0'+HUMI/10%10;  
-			
-			a[1] = '0'+TEMP%10;
-			a[0] = '0'+TEMP/10%10;
+	
+	  OLED_P8x16Str(32,2,'0'+TEMP/10%10);
+	  OLED_P8x16Str(40,2,'0'+TEMP%10);		
+		OLED_P8x16Str(96,2,'0'+HUMI/10%10);
+	  OLED_P8x16Str(104,2,'0'+HUMI%10);
+	
+//		OLED_P8x16Str(32,2,"1");
+//	  OLED_P8x16Str(40,2,"2");	
+//		
+//		OLED_P8x16Str(96,2,"5");
+//	  OLED_P8x16Str(104,2,"6");	
+
 		
-	  OLED_P8x16Str(42,2,&a[0]);
-	  OLED_P8x16Str(52,2,&a[1]);		
-		OLED_P8x16Str(42,4,&b[0]);
-	  OLED_P8x16Str(52,4,&b[1]);
-	
+	  if(LED){
+					OLED_P16x16Ch(32,4,24);
 
+		}else{
+					OLED_P16x16Ch(32,4,25);
 
-	
-			
-		DELAY_MS(8000);
+		}
+
+		if(Buzzer){
+					OLED_P16x16Ch(104,4,24);
+
+		}else{
+					OLED_P16x16Ch(104,4,25);
+
+		}
+				
+		
+	//	DELAY_MS(8000);
 
 
 

@@ -50,8 +50,8 @@
 // SCL接P4^5
 // SDA接P2^7
 // ------------------------------------------------------------
-sbit SCL=P3^4; //串行时钟
-sbit SDA=P3^3; //串行数据
+sbit SCL=P3^1; //串行时钟
+sbit SDA=P3^0; //串行数据
 
 #define high 1
 #define low 0
@@ -59,6 +59,9 @@ sbit SDA=P3^3; //串行数据
 #define	Brightness	0xCF 
 #define X_WIDTH 	128
 #define Y_WIDTH 	64
+
+
+
 /*********************OLED驱动程序用的延时程序************************************/
 void delay(unsigned int z)
 {
@@ -264,3 +267,24 @@ void Draw_BMP(unsigned char x0, y0,x1, y1,unsigned char BMP[])
 	    }
 	}
 }
+
+////在指定位置显示一个字符,包括部分字符
+////x:0~127
+////y:0~63
+////mode:0,反白显示;1,正常显示				 
+////size:选择字体 16/12 
+//void OLED_ShowChar(unsigned char x,unsigned char y,unsigned char chr)
+//{      	
+//	unsigned char c=0,i=0;	
+//		c=chr-' ';//得到偏移后的值			
+//		if(x>Max_Column-1){x=0;y=y+2;}
+//		if(SIZE ==16)
+//			{
+//			OLED_Set_Pos(x,y);	
+//			for(i=0;i<8;i++)
+//			OLED_WR_Byte(F8X16[c*16+i],OLED_DATA);
+//			OLED_Set_Pos(x,y+1);
+//			for(i=0;i<8;i++)
+//			OLED_WR_Byte(F8X16[c*16+i+8],OLED_DATA);
+//			}
+//}
