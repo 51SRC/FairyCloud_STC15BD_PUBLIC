@@ -57,7 +57,7 @@ sbit SDA=P3^0; //´®ÐÐÊý¾Ý
 #define low 0
 
 #define	Brightness	0xCF 
-#define X_WIDTH 	128
+#define X_WIDTH 	131
 #define Y_WIDTH 	64
 
 

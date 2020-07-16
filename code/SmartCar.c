@@ -143,57 +143,43 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 //		DELAY_MS(200);
 
 
-//		OLED_P16x16Ch(24,0,1);
-//		OLED_P16x16Ch(40,0,2);
-//		OLED_P16x16Ch(57,0,3);
-//		OLED_P16x16Ch(74,0,4);
-//		OLED_P16x16Ch(91,0,5);
-
-		for(i=0; i<8; i++)//通过点整显示汉字 -- i表示字表数组的位置
-		{
-			OLED_P16x16Ch(i*16,0,i);
-		 	OLED_P16x16Ch(i*16,2,i+8);
-		 	OLED_P16x16Ch(i*16,4,i+16);
-		// 	OLED_P16x16Ch(i*16,6,i+24);
-
-		}
+		OLED_P16x16Ch(0,4,16);//灯光
+		OLED_P16x16Ch(16,4,17);
+		OLED_P16x16Ch(72,4,18);//喇叭
+		OLED_P16x16Ch(88,4,19);
 		
-		
-			OLED_P6x8Str(0,6,"2020.07.15 21:10");
-			OLED_P6x8Str(0,7,"status: success");//success close restart start
+		OLED_P8x16Str(0,0,"2020.07.15 21:10");
+		OLED_P6x8Str(0,7,"status: connected");//connected close start
 
-	
-	  OLED_P8x16Char(32,2,'0'+TEMP/10%10);
-	  OLED_P8x16Char(40,2,'0'+TEMP%10);		
-		OLED_P8x16Char(96,2,'0'+HUMI/10%10);
-	  OLED_P8x16Char(104,2,'0'+HUMI%10);
-	
-//		OLED_P8x16Str(32,2,"1");
-//	  OLED_P8x16Str(40,2,"2");	
-//		
-//		OLED_P8x16Str(96,2,"5");
-//	  OLED_P8x16Str(104,2,"6");	
+		OLED_P8x16Str(0,2,"Temp:");
+		OLED_P8x16Str(72,2,"Humi:");
 
+
+	  OLED_P8x16Char(40,2,'0'+TEMP/10%10);
+	  OLED_P8x16Char(48,2,'0'+TEMP%10);		
+		OLED_P8x16Char(112,2,'0'+HUMI/10%10);
+	  OLED_P8x16Char(120,2,'0'+HUMI%10);
+
+
+		OLED_P8x16Str(32,4,":");
+		OLED_P8x16Str(104,4,":");
 		
 	  if(LED){
-					OLED_P16x16Ch(32,4,24);
+					OLED_P16x16Ch(40,4,24);
 
 		}else{
-					OLED_P16x16Ch(32,4,25);
+					OLED_P16x16Ch(40,4,25);
 
 		}
 
 		if(Buzzer){
-					OLED_P16x16Ch(104,4,24);
+					OLED_P16x16Ch(112,4,24);
 
 		}else{
-					OLED_P16x16Ch(104,4,25);
+					OLED_P16x16Ch(112,4,25);
 
 		}
 				
-		
-	//	DELAY_MS(8000);
-
 
 
 		
