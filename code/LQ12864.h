@@ -215,6 +215,22 @@ void OLED_P6x8Str(unsigned char x, y,unsigned char ch[])
 	}
 }
 /*******************功能描述：显示8*16一组标准ASCII字符串	 显示的坐标（x,y），y为页范围0～7****************/
+void OLED_P8x16Char(unsigned char x, y,unsigned char ch)
+{
+	unsigned char c=0,i=0,j=0;
+	
+		c =ch-32;
+		if(x>120){x=0;y++;}
+		OLED_Set_Pos(x,y);
+		for(i=0;i<8;i++)
+		OLED_WrDat(F8X16[c*16+i]);
+		OLED_Set_Pos(x,y+1);
+		for(i=0;i<8;i++)
+		OLED_WrDat(F8X16[c*16+i+8]);
+		
+
+}
+/*******************功能描述：显示8*16一组标准ASCII字符串	 显示的坐标（x,y），y为页范围0～7****************/
 void OLED_P8x16Str(unsigned char x, y,unsigned char ch[])
 {
 	unsigned char c=0,i=0,j=0;

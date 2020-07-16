@@ -42,7 +42,7 @@ U8 CURRENT_LENGTH=0;
 
 static	 unsigned int   Timer4_Count=1;
 static	 unsigned int   Timeout_Count=0;
-
+static	 unsigned int   DisplayTime_Count=0;
 static unsigned char i;
 
 #define FOSC 11059200L          //系统频率
@@ -135,7 +135,6 @@ void main(){
 }
 
 void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
-	unsigned char a1,a2,b1,b2; 
 	
 	
 //		OLED_Fill(0xff); //屏全亮
@@ -164,11 +163,10 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 			OLED_P6x8Str(0,7,"status: success");//success close restart start
 
 	
-	
-	  OLED_P8x16Str(32,2,'0'+TEMP/10%10);
-	  OLED_P8x16Str(40,2,'0'+TEMP%10);		
-		OLED_P8x16Str(96,2,'0'+HUMI/10%10);
-	  OLED_P8x16Str(104,2,'0'+HUMI%10);
+	  OLED_P8x16Char(32,2,'0'+TEMP/10%10);
+	  OLED_P8x16Char(40,2,'0'+TEMP%10);		
+		OLED_P8x16Char(96,2,'0'+HUMI/10%10);
+	  OLED_P8x16Char(104,2,'0'+HUMI%10);
 	
 //		OLED_P8x16Str(32,2,"1");
 //	  OLED_P8x16Str(40,2,"2");	
@@ -582,7 +580,7 @@ void ConnectServer() {
     DELAY_MS(15000);
 
 
-    UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");	// 连接到指定TCP服务器192.168.0.2
+    UART_TC("AT+CIPSTART=\"TCP\",\"47.104.19.111\",4001\r\n\0");	// 连接到指定TCP服务器47.104.19.111
     DELAY_MS( 5000);
 
     UART_TC("AT+CIPMODE=1\r\n\0"); // 设置透传模式
@@ -615,6 +613,14 @@ void Timer4Init(void)
 void Timer4_interrupt() interrupt 20    //定时中断入口
 {
 	
+	if(DisplayTime_Count>=20){  //20 * 50ms = 1s
+		DisplayTime_Count = 0;
+		
+	}else{
+		 DisplayTime_Count++;//每加一次加50ms
+	}
+	
+	
 
 		if(Timer4_Count>=200){  //200 * 50ms = 10s
 			  	unsigned char j=0;
@@ -622,7 +628,7 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
           unsigned char RES_LEN= 37;
 					unsigned char  light_status = LED ? 0x02 : 0x01;
 					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-					Timer4_Count = 1;
+					Timer4_Count = 0;
 
 				  RES_DATA[0] = 0X23;//数据头
 					RES_DATA[1] = 0X23;
