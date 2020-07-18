@@ -33,7 +33,7 @@ typedef long I32;
 typedef unsigned char U8; 
 
 U8 SRCHeader = 0x23;
-U8 xdata SRCCID[] = {"SRC00000000000003"};
+U8 xdata SRCCID[] = {"SRC00000000000001"};
 U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";
 U8 xdata DATA_GET[500]={0};//»º³åÇø³¤¶È
 
