@@ -23,6 +23,7 @@
 #include "LQ12864.h"
 
 sbit LED = P3 ^ 2;  // LED
+sbit PUMP = P2 ^ 3;  // 电泵PUMP
 sbit Buzzer = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
 
 bit busy;
@@ -68,6 +69,8 @@ unsigned char CheckBCC(unsigned char len, unsigned char *recv);
 void ResponseData(unsigned char len,unsigned char *RES_DATA);
 void Buzzer_Actions_Status(unsigned char status);
 void Led_Actions_Status(unsigned char status);
+void Pump_Actions_Status(unsigned char status);
+
 void Timer0Init(void);
 void LEDFunc(unsigned char TEMP,unsigned char HUMI)	;
 
@@ -164,7 +167,7 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		OLED_P8x16Str(32,4,":");
 		OLED_P8x16Str(104,4,":");
 		
-	  if(LED){
+	  if(PUMP){
 					OLED_P16x16Ch(40,4,24);
 
 		}else{
@@ -267,7 +270,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 		 }else if(dataCmdFlag ==0x8006){//远程控制
 
 			 if(RES_DATA[31] == 0x02){//基础数据查询	温度、湿度、灯、喇叭；请见【信息体定义】
-					unsigned char  light_status = LED ? 0x02 : 0x01;
+					unsigned char  light_status = PUMP ? 0x02 : 0x01;
 					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
 					unsigned char xdata ds[37] = {0};
 					unsigned char dslen =37;
@@ -314,13 +317,13 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 				 
 			 }else if(RES_DATA[31] == 0x03){//基础控制	灯、喇叭；请见【信息体定义】
 				 			 
-					 unsigned char light = RES_DATA[32];
+					 unsigned char pump = RES_DATA[32];
 					 unsigned char buzzy = RES_DATA[33];
 			 
-					 if( light==0x02){
-							Led_Actions_Status(0);
-						}else if( light==0x01){
-							Led_Actions_Status(1);
+					 if( pump==0x02){
+							Pump_Actions_Status(0);
+						}else if( pump==0x01){
+							Pump_Actions_Status(1);
 						}
 					 
 					 if( buzzy==0x02){
@@ -418,6 +421,7 @@ void Device_Init() {
 
     LED = 0;
     Buzzer = 0;
+		PUMP = 0;
 }
 
 //初始化完成滴滴两声
@@ -612,7 +616,7 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 			  	unsigned char j=0;
 					U8 xdata RES_DATA[37]= {0};
           unsigned char RES_LEN= 37;
-					unsigned char  light_status = LED ? 0x02 : 0x01;
+					unsigned char  light_status = PUMP ? 0x02 : 0x01;
 					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
 					Timer4_Count = 0;
 
@@ -707,6 +711,17 @@ void timer0_int (void) interrupt 1
 			
 }
 
+
+
+void Pump_Actions_Status(unsigned char status){
+
+	if(status){
+		PUMP = 0;
+	}else{
+		PUMP = 1;
+	}
+
+}
 
 void Led_Actions_Status(unsigned char status){
 
