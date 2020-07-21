@@ -69,10 +69,10 @@ unsigned char CheckBCC(unsigned char len, unsigned char *recv);
 void ResponseData(unsigned char len,unsigned char *RES_DATA);
 void Buzzer_Actions_Status(unsigned char status);
 void Led_Actions_Status(unsigned char status);
-void Pump_Actions_Status(unsigned char status);
+void Pump_Actions_Status(unsigned char status);//开关水泵
 
 void Timer0Init(void);
-void LEDFunc(unsigned char TEMP,unsigned char HUMI)	;
+void LEDFunc(unsigned char TEMP,unsigned char HUMI)	;//LED显示温湿度// SCL接P4^1  // SDA接P4^2
 
 
 void main(){
@@ -146,12 +146,12 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 //		DELAY_MS(200);
 
 
-		OLED_P16x16Ch(0,4,16);//灯光
+		OLED_P16x16Ch(0,4,16);//水泵
 		OLED_P16x16Ch(16,4,17);
 		OLED_P16x16Ch(72,4,18);//喇叭
 		OLED_P16x16Ch(88,4,19);
 		
-		OLED_P8x16Str(0,0,"2020.07.15 21:10");
+		OLED_P8x16Str(0,0,"2020.07.15 21:10");//显示时间，暂且写死后续优化
 		OLED_P6x8Str(0,7,"status: connected");//connected close start
 
 		OLED_P8x16Str(0,2,"Temp:");
@@ -167,7 +167,7 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		OLED_P8x16Str(32,4,":");
 		OLED_P8x16Str(104,4,":");
 		
-	  if(PUMP){
+	  if(PUMP){//显示水泵状态 开/关
 					OLED_P16x16Ch(40,4,24);
 
 		}else{
@@ -175,7 +175,7 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 
 		}
 
-		if(Buzzer){
+		if(Buzzer){//显示蜂鸣器状态 开/关
 					OLED_P16x16Ch(112,4,24);
 
 		}else{

@@ -1,4 +1,4 @@
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 1   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 1   
 
 
 C51 COMPILER V8.02, COMPILATION OF MODULE SMARTCAR
@@ -62,7 +62,7 @@ line level    source
   52          #define S1_S0 0x40              //P_SW1.6
   53          #define S1_S1 0x80              //P_SW1.7
   54          
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 2   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 2   
 
   55          
   56          void DELAY_MS(unsigned int timeout);    //@11.0592MHz   1ms
@@ -81,10 +81,10 @@ line level    source
   69          void ResponseData(unsigned char len,unsigned char *RES_DATA);
   70          void Buzzer_Actions_Status(unsigned char status);
   71          void Led_Actions_Status(unsigned char status);
-  72          void Pump_Actions_Status(unsigned char status);
+  72          void Pump_Actions_Status(unsigned char status);//开关水泵
   73          
   74          void Timer0Init(void);
-  75          void LEDFunc(unsigned char TEMP,unsigned char HUMI) ;
+  75          void LEDFunc(unsigned char TEMP,unsigned char HUMI) ;//LED显示温湿度// SCL接P4^1  // SDA接P4^2
   76          
   77          
   78          void main(){
@@ -126,7 +126,7 @@ line level    source
  113   1          ConnectSuccess();
  114   1          
  115   1          Timer4Init();
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 3   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 3   
 
  116   1          Timer0Init();
  117   1      
@@ -161,12 +161,12 @@ line level    source
  146   1      //    DELAY_MS(200);
  147   1      
  148   1      
- 149   1          OLED_P16x16Ch(0,4,16);//灯光
+ 149   1          OLED_P16x16Ch(0,4,16);//水泵
  150   1          OLED_P16x16Ch(16,4,17);
  151   1          OLED_P16x16Ch(72,4,18);//喇叭
  152   1          OLED_P16x16Ch(88,4,19);
  153   1          
- 154   1          OLED_P8x16Str(0,0,"2020.07.15 21:10");
+ 154   1          OLED_P8x16Str(0,0,"2020.07.15 21:10");//显示时间，暂且写死后续优化
  155   1          OLED_P6x8Str(0,7,"status: connected");//connected close start
  156   1      
  157   1          OLED_P8x16Str(0,2,"Temp:");
@@ -182,7 +182,7 @@ line level    source
  167   1          OLED_P8x16Str(32,4,":");
  168   1          OLED_P8x16Str(104,4,":");
  169   1          
- 170   1          if(PUMP){
+ 170   1          if(PUMP){//显示水泵状态 开/关
  171   2                OLED_P16x16Ch(40,4,24);
  172   2      
  173   2          }else{
@@ -190,9 +190,9 @@ line level    source
  175   2      
  176   2          }
  177   1      
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 4   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 4   
 
- 178   1          if(Buzzer){
+ 178   1          if(Buzzer){//显示蜂鸣器状态 开/关
  179   2                OLED_P16x16Ch(112,4,24);
  180   2      
  181   2          }else{
@@ -254,7 +254,7 @@ line level    source
  236   2           unsigned char j=0;
  237   2           unsigned char dataEncryptFlag = RES_DATA[22];    //加密方式
  238   2           unsigned char dataUintLength = (RES_DATA[23] << 8) | RES_DATA[24];  //数据长度
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 5   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 5   
 
  239   2           unsigned char xdata  dataTimestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //时间数据
  240   2      
@@ -318,7 +318,7 @@ line level    source
  298   4              ds[27] = 0X18;//日 
  299   4              ds[28] = 0X15;//时 
  300   4              ds[29] = 0X24;//分
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 6   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 6   
 
  301   4              ds[30] = 0X08;//秒
  302   4              
@@ -382,7 +382,7 @@ line level    source
  360   4              RES_DATA[26] = 0X05;//月 
  361   4              RES_DATA[27] = 0X18;//日 
  362   4              RES_DATA[28] = 0X15;//时 
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 7   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 7   
 
  363   4              RES_DATA[29] = 0X24;//分
  364   4              RES_DATA[30] = 0X08;//秒
@@ -446,7 +446,7 @@ line level    source
  422   1          LED = 0;
  423   1          Buzzer = 0;
  424   1          PUMP = 0;
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 8   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 8   
 
  425   1      }
  426          
@@ -510,7 +510,7 @@ line level    source
  484   2              UART_R();
  485   2              busy = 0;
  486   2      
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 9   
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 9   
 
  487   2          }
  488   1          if (TI)
@@ -574,7 +574,7 @@ line level    source
  545          
  546          //重启 ESP8266WiFi模块
  547          void ReConnectServer() {
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 10  
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 10  
 
  548   1      
  549   1          UART_TC("+++\0"); // 退出透传模式
@@ -638,7 +638,7 @@ line level    source
  607   2          DisplayTime_Count = 0;
  608   2          
  609   2        }else{
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 11  
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 11  
 
  610   2           DisplayTime_Count++;//每加一次加50ms
  611   2        }
@@ -702,7 +702,7 @@ line level    source
  669   2      //            Timeout_Count = 0;
  670   2      //            UART_TC("AT+RST\r\n\0");  // 复位
  671   2      //          //  IAP_CONTR = 0X20;
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 12  
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 12  
 
  672   2      //        }
  673   2              
@@ -766,7 +766,7 @@ line level    source
  731   2          LED = 1;
  732   2        }
  733   1      
-C51 COMPILER V8.02   SMARTCAR                                                              07/19/2020 10:36:47 PAGE 13  
+C51 COMPILER V8.02   SMARTCAR                                                              07/21/2020 14:58:56 PAGE 13  
 
  734   1      }
  735          
@@ -783,7 +783,7 @@ line level    source
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =   3100    ----
-   CONSTANT SIZE    =   5439    ----
+   CONSTANT SIZE    =   3391    ----
    XDATA SIZE       =    553      80
    PDATA SIZE       =   ----    ----
    DATA SIZE        =      9      61
