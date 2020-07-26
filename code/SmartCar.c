@@ -39,12 +39,19 @@ U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";
 U8 xdata DATA_GET[500]={0};//缓冲区长度
 
 
+U8 xdata SRCOPENID[] = {"627460345c74ffa8d078c98b541fb091"};//32位的openid，可在小程序《黑狼精灵》个人中心查看
+static	  unsigned char   CheckTime = 0;  //是否已和服务器同步时间
+static	  unsigned char   CheckAuth = 0; //是否已登陆验证
+static	 unsigned int xdata  Timestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //用来保存服务器的时间数据
+
+
+
 U8 CURRENT_LENGTH=0;
 
 static	 unsigned int   Timer4_Count=1;
 static	 unsigned int   Timeout_Count=0;
 static	 unsigned int   DisplayTime_Count=0;
-static unsigned char i;
+static   unsigned char i;
 
 #define FOSC 11059200L          //系统频率
 #define BAUD 115200             //串口波特率
@@ -99,6 +106,7 @@ void main(){
 	  OLED_Init(); //OLED初始化
 		
 		LEDFunc(0,0);
+		OLED_P6x8Str(0,7,"status: starting");//connected closed starting
 
 
     USART_Init();//初始化与WiFi通信的串口
@@ -140,19 +148,38 @@ void main(){
 void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 	
 	
-//		OLED_Fill(0xff); //屏全亮
-//		DELAY_MS(2000);
-//		OLED_Fill(0x00); //屏全灭
-//		DELAY_MS(200);
-
-
 		OLED_P16x16Ch(0,4,16);//水泵
 		OLED_P16x16Ch(16,4,17);
 		OLED_P16x16Ch(72,4,18);//喇叭
 		OLED_P16x16Ch(88,4,19);
 		
-		OLED_P8x16Str(0,0,"2020.07.15 21:10");//显示时间，暂且写死后续优化
-		OLED_P6x8Str(0,7,"status: connected");//connected close start
+		OLED_P8x16Str(0,0,"00.00   00:00:00");//显示时间
+		
+		
+		
+		OLED_P8x16Char(0,0,'0'+Timestamp[1]/10%10); //月
+	  OLED_P8x16Char(8,0,'0'+Timestamp[1]%10);		
+		OLED_P8x16Str(16,0,".");
+		
+		OLED_P8x16Char(24,0,'0'+Timestamp[2]/10%10); //日
+	  OLED_P8x16Char(32,0,'0'+Timestamp[2]%10);		
+		OLED_P8x16Str(40,0,"   ");
+		
+		OLED_P8x16Char(64,0,'0'+Timestamp[3]/10%10); //时
+	  OLED_P8x16Char(72,0,'0'+Timestamp[3]%10);		
+		OLED_P8x16Str(80,0,":");
+		
+		OLED_P8x16Char(88,0,'0'+Timestamp[4]/10%10); //分
+	  OLED_P8x16Char(96,0,'0'+Timestamp[4]%10);		
+		OLED_P8x16Str(104,0,":");
+		
+		OLED_P8x16Char(112,0,'0'+Timestamp[5]/10%10); //秒
+	  OLED_P8x16Char(120,0,'0'+Timestamp[5]%10);		
+		
+		
+		
+		OLED_P6x8Str(0,7,"status: connected");//connected closed starting
+
 
 		OLED_P8x16Str(0,2,"Temp:");
 		OLED_P8x16Str(72,2,"Humi:");
@@ -184,30 +211,6 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		}
 				
 
-
-		
-//		for(i=0; i<8; i++)//通过点整显示汉字 -- i表示字表数组的位置
-//		{
-//			OLED_P16x16Ch(i*16,0,i);
-//		 	OLED_P16x16Ch(i*16,2,i+8);
-//		 	OLED_P16x16Ch(i*16,4,i+16);
-//		 	OLED_P16x16Ch(i*16,6,i+24);
-//		}
-	//	DELAY_MS(4000);
-//		OLED_CLS();//清屏
-
-//		OLED_P8x16Str(0,0,"温度：12℃");//第一行 -- 8x16的显示单元显示ASCII码
-//		OLED_P8x16Str(0,2,"OLED Display");
-//		OLED_P8x16Str(0,4,"www.heltec.cn");
-//		OLED_P6x8Str(0,6,"cn.heltec@gmail.com");
-//		OLED_P6x8Str(0,7,"heltec.taobao.com");
-//		DELAY_MS(4000);
-	//	OLED_CLS();
-
-//		Draw_BMP(0,0,128,8,BMP1);  //图片显示(图片显示慎用，生成的字表较大，会占用较多空间，FLASH空间8K以下慎用)
-//		DELAY_MS(8000);
-//		Draw_BMP(0,0,128,8,BMP2);
-//		DELAY_MS(8000);
 	}
 
 unsigned char CheckBCC(unsigned char len, unsigned char *recv){
@@ -236,7 +239,6 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 		 unsigned char j=0;
 		 unsigned char dataEncryptFlag = RES_DATA[22];    //加密方式
 		 unsigned char dataUintLength = (RES_DATA[23] << 8) | RES_DATA[24];  //数据长度
-		 unsigned char xdata  dataTimestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //时间数据
 
 	 //校验CID是否正确
 		 for(j=5;j<22;j++){
@@ -252,12 +254,23 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 		 
 		 Timeout_Count = 0;//将本地的30s重连计数清零
 		 
-		 //保存时间
-		 for(j=0;j<6;j++){
-			 dataTimestamp[j] = RES_DATA[25+j];
-		 }
+
 		 
 		 if(dataCmdFlag == 0x8001){//连接认证
+			  if(RES_DATA[31] == 0x7E){//同步时间结果
+			  	unsigned char j=0;
+					 for(j=0;j<6;j++){
+						Timestamp[j] = RES_DATA[j+32];
+				 }
+					 
+					 Timestamp[0] = Timestamp[0] + 2000;
+					 CheckTime = 1;
+		 
+		    }else  if(RES_DATA[31] == 0x01){//连接认证结果
+					 
+					 CheckAuth = 1;
+		    }
+			 
 			 
 		 }else if(dataCmdFlag ==0x8002){//实时信息主动上报
 			 
@@ -293,12 +306,12 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 				ds[23] = 0X00;//长度两位 高位00
 				ds[24] = 0X0B;//低位0B 一共11位
 
-				ds[25] = 0X14;//年 0x14+2000 = 2020 
-				ds[26] = 0X05;//月 
-				ds[27] = 0X18;//日 
-				ds[28] = 0X15;//时 
-				ds[29] = 0X24;//分
-				ds[30] = 0X08;//秒
+				ds[25] = Timestamp[0];//年 0x14+2000 = 2020 
+				ds[26] = Timestamp[1];//月 
+				ds[27] = Timestamp[2];//日 
+				ds[28] = Timestamp[3];//时 
+				ds[29] = Timestamp[4];//分
+				ds[30] = Timestamp[5];//秒
 				
 				ds[31] = 0X02;//基础查询   编码
 
@@ -356,12 +369,12 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 				RES_DATA[23] = 0X00;//长度两位 高位00
 				RES_DATA[24] = 0X09;//低位09 一共9位    6位的时间+1位的命令标识 + 2位的数据
 
-				RES_DATA[25] = 0X14;//年 0x14+2000 = 2020 
-				RES_DATA[26] = 0X05;//月 
-				RES_DATA[27] = 0X18;//日 
-				RES_DATA[28] = 0X15;//时 
-				RES_DATA[29] = 0X24;//分
-				RES_DATA[30] = 0X08;//秒
+				RES_DATA[25] = Timestamp[0];//年 0x14+2000 = 2020 
+				RES_DATA[26] = Timestamp[1];//月 
+				RES_DATA[27] = Timestamp[2];//日 
+				RES_DATA[28] = Timestamp[3];//时 
+				RES_DATA[29] = Timestamp[4];//分
+				RES_DATA[30] = Timestamp[5];//秒
 				
 				RES_DATA[31] = 0X03;//基础控制  灯、喇叭；请见【信息体定义】
 				
@@ -550,6 +563,8 @@ void ReConnectServer() {
 		 DELAY_MS( 1000);
     UART_TC("AT+RST\r\n\0");  // 复位
 		
+
+		
 }
 
 //初始化ESP8266WiFi模块，并连接到服务器
@@ -603,79 +618,195 @@ void Timer4Init(void)
 void Timer4_interrupt() interrupt 20    //定时中断入口
 {
 	
+
+	
 	if(DisplayTime_Count>=20){  //20 * 50ms = 1s
 		DisplayTime_Count = 0;
+		
+		if(CheckTime==1){  //已经同步过服务器时间后
+			
+			Timestamp[5] =  Timestamp[5] + 1;//秒
+			
+			if(Timestamp[5]>=60){
+				Timestamp[5] = 0;
+				Timestamp[4] = Timestamp[4] + 1;//分
+				
+				if(Timestamp[4]>=60){
+					Timestamp[4] = 0;
+					Timestamp[3] = Timestamp[3] + 1;//小时
+					
+					if(Timestamp[3]>=24){
+						Timestamp[3] = 0;
+						Timestamp[2] = Timestamp[2] + 1;//天
+						
+						if( ((Timestamp[1] == 4 || Timestamp[1] == 6 || Timestamp[1] == 9 || Timestamp[1] == 11) && Timestamp[2]>=30) || ((Timestamp[1] == 1 || Timestamp[1] == 3 || Timestamp[1] == 5 || Timestamp[1] == 7 || Timestamp[1] == 8 || Timestamp[1] == 10 || Timestamp[1] == 12) && Timestamp[2]>=31) || ((((Timestamp[0] % 4 == 0 && Timestamp[0] % 100 != 0) || Timestamp[0] % 400 == 0) == 1  && Timestamp[2]>=29 ) ||  (((Timestamp[0] % 4 == 0 && Timestamp[0] % 100 != 0) || Timestamp[0] % 400 == 0) == 1  && Timestamp[2]>=28) ) ){
+							Timestamp[2] = 1;
+							Timestamp[1] = Timestamp[1] + 1;//月
+							
+							if(Timestamp[1]>=13){
+								Timestamp[1] = 1;
+								Timestamp[0] = Timestamp[0] + 1;//年
+							 }
+							
+						 }
+						
+				 	}
+					
+			 	}	
+				
+		 	 }
+			
+	  	}
+		
+		
+		
+				if(CheckTime==0){//设备同步时间
+					
+							unsigned char j=0;
+							U8 xdata RES_DATA[65]= {0};
+							unsigned char RES_LEN= 65;
+							
+							RES_DATA[0] = 0X23;//数据头
+							RES_DATA[1] = 0X23;
+							RES_DATA[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
+							RES_DATA[3] = 0X01;
+							RES_DATA[4] = 0xFE;//应答标识
+								
+						 for(j=0;j<17;j++){//CID赋值
+								RES_DATA[j+5] = SRCCID[j];
+						 }
+						 
+						RES_DATA[22] = 0X01;//不加密
+						RES_DATA[23] = 0X00;//长度两位 高位00
+						RES_DATA[24] = 0X27;//低位0x27 
+
+						for(j=0;j<6;j++){//Timestamp
+								RES_DATA[j+25] = Timestamp[j];
+						 }
+					
+						
+						RES_DATA[31] = 0X7E;//同步时间
+
+						for(j=0;j<32;j++){//openid
+								RES_DATA[j+32] = SRCOPENID[j];
+						 }
+					
+					RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
+												
+					SendAckData(RES_LEN,RES_DATA);
+					
+				
+				} else if( CheckAuth ==0 ){//设备登陆认证
+					
+						unsigned char j=0;
+							U8 xdata RES_DATA[65]= {0};
+							unsigned char RES_LEN= 65;
+							
+							RES_DATA[0] = 0X23;//数据头
+							RES_DATA[1] = 0X23;
+							RES_DATA[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
+							RES_DATA[3] = 0X01;
+							RES_DATA[4] = 0xFE;//应答标识
+								
+						 for(j=0;j<17;j++){//CID赋值
+								RES_DATA[j+5] = SRCCID[j];
+						 }
+						 
+						RES_DATA[22] = 0X01;//不加密
+						RES_DATA[23] = 0X00;//长度两位 高位00
+						RES_DATA[24] = 0X27;//低位0x27 
+
+						for(j=0;j<6;j++){//Timestamp
+								RES_DATA[j+25] = Timestamp[j];
+						 }
+					
+						
+						RES_DATA[31] = 0X01;//登陆认证
+
+						for(j=0;j<32;j++){//openid
+								RES_DATA[j+32] = SRCOPENID[j];
+						 }
+					
+					RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
+												
+					SendAckData(RES_LEN,RES_DATA);
+					
+					
+				}else {
+					
+					
+				}
+
+		
+		
 		
 	}else{
 		 DisplayTime_Count++;//每加一次加50ms
 	}
 	
+
+			
+			
+				if(Timer4_Count>=200){  //200 * 50ms = 10s
+							unsigned char j=0;
+							U8 xdata RES_DATA[37]= {0};
+							unsigned char RES_LEN= 37;
+							unsigned char  light_status = PUMP ? 0x02 : 0x01;
+							unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
+							Timer4_Count = 0;
 	
+							RES_DATA[0] = 0X23;//数据头
+							RES_DATA[1] = 0X23;
+							RES_DATA[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
+							RES_DATA[3] = 0X06;
+							RES_DATA[4] = 0xFE;//应答标识
+								
+						 for(j=0;j<17;j++){//CID赋值
+								RES_DATA[j+5] = SRCCID[j];
+						 }
+						 
+						RES_DATA[22] = 0X01;//不加密
+						RES_DATA[23] = 0X00;//长度两位 高位00
+						RES_DATA[24] = 0X0B;//低位0B 一共11位
 
-		if(Timer4_Count>=200){  //200 * 50ms = 10s
-			  	unsigned char j=0;
-					U8 xdata RES_DATA[37]= {0};
-          unsigned char RES_LEN= 37;
-					unsigned char  light_status = PUMP ? 0x02 : 0x01;
-					unsigned char buzzy_status = Buzzer ? 0x02 : 0x01;
-					Timer4_Count = 0;
-
-				  RES_DATA[0] = 0X23;//数据头
-					RES_DATA[1] = 0X23;
-					RES_DATA[2] = 0X10;//命令标识  下发0x8006  对于的上传是0x1006
-					RES_DATA[3] = 0X06;
-					RES_DATA[4] = 0xFE;//应答标识
+						RES_DATA[25] = Timestamp[0];//年 0x14+2000 = 2020 
+						RES_DATA[26] = Timestamp[1];//月 
+						RES_DATA[27] = Timestamp[2];//日 
+						RES_DATA[28] = Timestamp[3];//时 
+						RES_DATA[29] = Timestamp[4];//分
+						RES_DATA[30] = Timestamp[5];//秒
 						
-				 for(j=0;j<17;j++){//CID赋值
-						RES_DATA[j+5] = SRCCID[j];
-				 }
-				 
-				RES_DATA[22] = 0X01;//不加密
-				RES_DATA[23] = 0X00;//长度两位 高位00
-				RES_DATA[24] = 0X0B;//低位0B 一共11位
+						RES_DATA[31] = 0X02;//基础数据上报
 
-				RES_DATA[25] = 0X14;//年 0x14+2000 = 2020 
-				RES_DATA[26] = 0X05;//月 
-				RES_DATA[27] = 0X18;//日 
-				RES_DATA[28] = 0X15;//时 
-				RES_DATA[29] = 0X24;//分
-				RES_DATA[30] = 0X08;//秒
-				
-				RES_DATA[31] = 0X02;//基础数据上报
-
-
-//			if(DATA_Temphui[2]==1)
-//			{
-//					DATA_Temphui[2]=0;//复位将其  用于检测是否收到数据
-//			}
-
-			RES_DATA[32] = DATA_Temphui[0];
-			RES_DATA[33] = 	DATA_Temphui[1];
-			RES_DATA[34] = light_status;
-			RES_DATA[35] = buzzy_status,
-			RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
+					RES_DATA[32] = DATA_Temphui[0];
+					RES_DATA[33] = 	DATA_Temphui[1];
+					RES_DATA[34] = light_status;
+					RES_DATA[35] = buzzy_status,
+					RES_DATA[RES_LEN-1] = CheckBCC(RES_LEN, RES_DATA);
+							
+					Timeout_Count++;//每加一次加10s
 					
-		  Timeout_Count++;//每加一次加10s
-			
-			if(Timeout_Count < 3){
-				SendAckData(RES_LEN,RES_DATA);
-		}else if(Timeout_Count >= 3){//1min 重启机器
-				//UART_TC("+++\0"); // 退出透传模式
-        
-				ReConnectServer();
-				Timeout_Count = 0;
-			
-			}//else 	if(Timeout_Count > 3){
-//						Timeout_Count = 0;
-//					  UART_TC("AT+RST\r\n\0");  // 复位
-//					//	IAP_CONTR = 0X20;
-//				}
+					if(Timeout_Count < 3 && CheckTime==1 && CheckAuth ==1){ //没有认证成功发了服务器也会拒绝
+						
+						SendAckData(RES_LEN,RES_DATA);
+				}else if(Timeout_Count >= 3){//30s还是收不到服务器返回的数据，则 重启机器
+						
+						ReConnectServer();
+						Timeout_Count = 0;
+						
+								//重新认证
+								CheckTime = 0;
+								CheckAuth = 0;
+							OLED_P6x8Str(0,7,"status: closed");//connected closed starting
+
+					}
+					
+				}else{
+					
+						Timer4_Count++;
+				}
 				
-			
-		}else{
-			
-		    Timer4_Count++;
-		}
+
 		
 }
 
