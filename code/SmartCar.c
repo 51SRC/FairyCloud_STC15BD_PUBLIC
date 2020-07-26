@@ -13,6 +13,18 @@
 
 
 
+/* --------------------------- 重要说明 -------------------------------------------------------------------------------*/
+
+/*--1.微信订阅号文章可能不是最新的，代码才是最新的---------------------------------------------------------------------*/
+/*--2.后来加入了一个水泵PUMP，对于的引脚是P2^3，P2^3是LED灯------------------------------------------------------------*/
+/*--3.12864显示屏的引脚对应关系 //sbit SCL=P4^1; 串行时钟  //sbit SDA=P4^2; 串行数据---在头文件L112864,H中修改---------*/
+/*--4.单片机启动：单片机启动==》拉取服务器时间==》OPENID认证==》建立链接==》正常通信-----------------------------------*/
+/*--5.本代码，请更换SRCCID为你的设备CID,  SRCOPENID为你的openid ,      netConfig这里面包含你的WiFi名和密码-------------*/
+/* --------------------------- QQ:1055417926 --------------------------------------------------------------------------*/
+
+/* --------------------------- END ------------------------------------------------------------------------------------*/
+
+
 #include "STC15W4K58S4.h"
 #include "DHT11.h"
 #include "intrins.h"
@@ -22,8 +34,11 @@
 #include "LQ12864.h"
 
 sbit LED = P3 ^ 2;  // LED
-sbit PUMP = P2 ^ 3;  // 电泵PUMP
+sbit PUMP = P3 ^ 2;  
+//sbit PUMP = P2 ^ 3;  // 水泵PUMP
 sbit Buzzer = P5 ^ 4;  // 蜂鸣器  记得用一个三极管驱动哦
+//sbit SCL=P4^1; //串行时钟
+//sbit SDA=P4^2; //串行数据
 
 bit busy;
 
@@ -33,14 +48,14 @@ typedef long I32;
 typedef unsigned char U8; 
 
 U8 SRCHeader = 0x23;
-U8 xdata SRCCID[] = {"SRC00000000000001"};
-U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";
+U8 xdata SRCCID[] = {"SRC00000000000004"};//你的设备ID 17位
+U8 xdata netConfig[] = "AT+CWJAP=\"Gunter\",\"{qwerty123}\"\r\n\0";// 你的WiFi名称和密码  示例的WiFi名称 Gunter     密码    {qwerty123}
 U8 xdata DATA_GET[500]={0};//缓冲区长度
 
 
-U8 xdata SRCOPENID[] = {"627460345c74ffa8d078c98b541fb091"};//32位的openid，可在小程序《黑狼精灵》个人中心查看
-static	  unsigned char   CheckTime = 0;  //是否已和服务器同步时间
-static	  unsigned char   CheckAuth = 0; //是否已登陆验证
+U8 xdata SRCOPENID[] = {"627460345c74ffa8d078c98b541fb092"};//你的32位的openid，可在小程序《黑狼精灵》个人中心查看
+static	  unsigned char   CheckTime = 0;  //是否已和服务器同步时间    标识
+static	  unsigned char   CheckAuth = 0; //是否已登陆验证   标识
 static	 unsigned int xdata  Timestamp[6] = {0x00,0x00,0x00,0x00,0x00,0x00};  //用来保存服务器的时间数据
 
 
