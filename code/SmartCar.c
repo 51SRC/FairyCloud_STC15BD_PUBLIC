@@ -10,8 +10,7 @@
 /* 如果要在文章中应用此代码,请在文章中注明使用了STC的资料及程序        */
 /*---------------------------------------------------------------------*/
 
-//本示例在Keil开发环境下请选择Intel的8058芯片型号进行编译
-//若无特别说明,工作频率一般为11.0592MHz
+
 
 
 #include "STC15W4K58S4.h"
@@ -106,7 +105,7 @@ void main(){
 	  OLED_Init(); //OLED初始化
 		
 		LEDFunc(0,0);
-		OLED_P6x8Str(0,7,"status: starting");//connected closed starting
+		OLED_P6x8Str(0,7,"status: Starting    ");//connected closed starting
 
 
     USART_Init();//初始化与WiFi通信的串口
@@ -153,7 +152,7 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		OLED_P16x16Ch(72,4,18);//喇叭
 		OLED_P16x16Ch(88,4,19);
 		
-		OLED_P8x16Str(0,0,"00.00   00:00:00");//显示时间
+	//	OLED_P8x16Str(0,0,"00.00   00:00:00");//显示时间
 		
 		
 		
@@ -176,9 +175,7 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		OLED_P8x16Char(112,0,'0'+Timestamp[5]/10%10); //秒
 	  OLED_P8x16Char(120,0,'0'+Timestamp[5]%10);		
 		
-		
-		
-		OLED_P6x8Str(0,7,"status: connected");//connected closed starting
+
 
 
 		OLED_P8x16Str(0,2,"Temp:");
@@ -208,6 +205,15 @@ void LEDFunc(unsigned char TEMP,unsigned char HUMI)	{
 		}else{
 					OLED_P16x16Ch(112,4,25);
 
+		}
+		
+				
+		if(CheckTime==0){
+				OLED_P6x8Str(0,7,"status: CheckTime  ");//connected closed starting
+		}else if(CheckAuth==0){
+				OLED_P6x8Str(0,7,"status: CheckAuth  ");//connected closed starting
+		}else{
+			  OLED_P6x8Str(0,7,"status: Connected  ");//Connected  Starting
 		}
 				
 
@@ -263,7 +269,7 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 						Timestamp[j] = RES_DATA[j+32];
 				 }
 					 
-					 Timestamp[0] = Timestamp[0] + 2000;
+					 Timestamp[0] = Timestamp[0] ;
 					 CheckTime = 1;
 		 
 		    }else  if(RES_DATA[31] == 0x01){//连接认证结果
@@ -394,8 +400,11 @@ void ResponseData(unsigned char len,unsigned char *RES_DATA) {
 			 
 		 }
 		 
-		
+		//刷新一下LED屏幕
+		LEDFunc(DATA_Temphui[0],DATA_Temphui[1]);
 	}
+	
+	
 	
 }
 
@@ -797,7 +806,7 @@ void Timer4_interrupt() interrupt 20    //定时中断入口
 								//重新认证
 								CheckTime = 0;
 								CheckAuth = 0;
-							OLED_P6x8Str(0,7,"status: closed");//connected closed starting
+							OLED_P6x8Str(0,7,"status: Closed    ");//Connected closed starting
 
 					}
 					

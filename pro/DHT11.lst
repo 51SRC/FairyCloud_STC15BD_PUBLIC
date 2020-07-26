@@ -1,4 +1,4 @@
-C51 COMPILER V8.02   DHT11                                                                 07/26/2020 17:26:16 PAGE 1   
+C51 COMPILER V8.02   DHT11                                                                 07/26/2020 18:09:49 PAGE 1   
 
 
 C51 COMPILER V8.02, COMPILATION OF MODULE DHT11
@@ -62,7 +62,7 @@ line level    source
   53   2          while (--j);
   54   2        } while (--i);
   55   1      }
-C51 COMPILER V8.02   DHT11                                                                 07/26/2020 17:26:16 PAGE 2   
+C51 COMPILER V8.02   DHT11                                                                 07/26/2020 18:09:49 PAGE 2   
 
   56          
   57          /*
@@ -126,7 +126,7 @@ line level    source
  115   1        {
  116   2          retry++;
  117   2          Delay1us();
-C51 COMPILER V8.02   DHT11                                                                 07/26/2020 17:26:16 PAGE 3   
+C51 COMPILER V8.02   DHT11                                                                 07/26/2020 18:09:49 PAGE 3   
 
  118   2        }
  119   1        Delay50us();//µÈ´ý50us
